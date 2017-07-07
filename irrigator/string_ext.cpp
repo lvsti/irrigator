@@ -14,7 +14,11 @@ int occurrenceCount(const String& src, char needle) {
     return count;
 }
 
-String bisect(const String& src, char separator, String& tail) {
+String bisect(const String& src, const String& separator, String& tail) {
+    if (separator.length() == 0) {
+        abort();
+    }
+
     int index = src.indexOf(separator);
     if (index < 0) {
         String head = src;
@@ -23,7 +27,7 @@ String bisect(const String& src, char separator, String& tail) {
     }
 
     String head = src.substring(0, index);
-    tail = src.substring(index + 1);
+    tail = src.substring(index + separator.length());
 
     return head;
 }
