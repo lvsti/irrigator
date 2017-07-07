@@ -2,6 +2,8 @@
 #define __http_request_h
 
 #include <WString.h>
+#include "linked_list.h"
+
 class Stream;
 
 struct HTTPFormField {
@@ -24,7 +26,11 @@ public:
 private:
     int _fieldCount;
     HTTPFormField* _fields;
+};
 
+struct HTTPHeaderField {
+    String name;
+    String value;
 };
 
 class HTTPRequest {
@@ -35,12 +41,14 @@ public:
     const String& uri() const { return _uri; }
     const String& query() const { return _query; }
     const String& body() const { return _body; }
+    const LinkedList<HTTPHeaderField>& headers() const { return _headers; }
 
 private:
     String _method;
     String _uri;
     String _query;
     String _body;
+    LinkedList<HTTPHeaderField> _headers;
 };
 
 #endif // __http_request_h

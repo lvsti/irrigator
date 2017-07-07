@@ -28,7 +28,18 @@ HTTPRequest::HTTPRequest(Stream& stream) {
     String url = bisect(tail, " ", tail);
     _uri = bisect(url, "?", _query);
 
-    if (stream.find("\r\n\r\n")) {
-        _body = stream.readString();
+    // skip the \r\n
+    stream.read();
+    String headerLine = stream.readStringUntil('\r');
+
+    while (headerLine.length() > 0) {
+        HTTPHeaderField header;
+        header.name = bisect(headerLine, ": ", header.value);
+        _headers.append(header);
+
+        stream.read();
+        headerLine = stream.readStringUntil('\r');
     }
+    
+    _body = stream.readString();
 }
