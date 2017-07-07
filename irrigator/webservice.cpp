@@ -3,6 +3,9 @@
 #include "common.h"
 #include "duty_cycle_manager.h"
 #include "http_request.h"
+#include "string_ext.h"
+
+static const char kWebserviceCredentials[] = "*:*";
 
 String renderTaskForm(const DutyCycleManagerClass::Task& task) {
     String form = F("<form method=\"post\" action=\"/valve/");
@@ -32,7 +35,16 @@ String renderStatusPage() {
     for (Valve v = 0; v < kNumValves; ++v) {
         page += renderTaskForm(DutyCycleManager.task(v));
     }
-    page += "</p></body></html>\r\n";
+    page += F("</p></body></html>");
+    return page;
+}
+
+String renderUnauthorized() {
+    String page = F("HTTP/1.1 401 Unauthorized\r\n");
+    page += F("WWW-Authenticate: Basic realm=\"Irrigator\"\r\n");
+    page += F("Content-Type: text/html\r\n\r\n");
+    page += F("<html><head><title>401 Unauthorized</title></head><body>");
+    page += F("<h1>Unauthorized</h1></body></html>");
     return page;
 }
 
@@ -54,7 +66,30 @@ String renderNotFound() {
     return page;
 }
 
+bool isAuthorized(const HTTPRequest& request) {
+    auto it = request.headers().iterator();
+    HTTPHeaderField* field = it.next();
+    while (field) {
+        if (field->name == F("Authorization") && field->value.startsWith("Basic ")) {
+            String credentialsB64;
+            String credentials;
+            bisect(field->value, " ", credentialsB64);
+            if (base64Decode(credentialsB64, credentials) && credentials == kWebserviceCredentials) {
+                return true;
+            }
+        }
+        field = it.next();
+    }
+
+    return false;
+}
+
 void handleUpdateValve(const HTTPRequest& request, Stream& responseStream) {
+    if (!isAuthorized(request)) {
+        responseStream.print(renderUnauthorized());
+        return;
+    }
+
     String vstr = request.uri().substring(7, request.uri().length() - 1);
     int v = vstr.toInt();
     if (v == 0 || v > kNumValves) {
@@ -89,6 +124,11 @@ void handleUpdateValve(const HTTPRequest& request, Stream& responseStream) {
 }
 
 void handleRestartDutyCycle(const HTTPRequest& request, Stream& responseStream) {
+    if (!isAuthorized(request)) {
+        responseStream.print(renderUnauthorized());
+        return;
+    }
+
     DutyCycleManager.restart();
 
     responseStream.print(renderRedirectToStatusPage());
