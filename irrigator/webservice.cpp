@@ -50,19 +50,23 @@ String renderUnauthorized() {
 
 String renderRedirectToStatusPage() {
     String page = F("HTTP/1.1 303 See Other\r\n");
-    page += F("Location: /\r\n");
+    page += F("Location: /\r\n\r\n");
     return page;
 }
 
 String renderBadRequest() {
     String page = F("HTTP/1.1 400 Bad Request\r\n");
-    page += F("Content-Type: text/html\r\n");
+    page += F("Content-Type: text/html\r\n\r\n");
+    page += F("<html><head><title>400 Bad Request</title></head><body>");
+    page += F("<h1>Bad Request</h1></body></html>");
     return page;
 }
 
 String renderNotFound() {
     String page = F("HTTP/1.1 404 Not Found\r\n");
     page += F("Content-Type: text/html\r\n\r\n");
+    page += F("<html><head><title>404 Not Found</title></head><body>");
+    page += F("<h1>Not Found</h1></body></html>");
     return page;
 }
 
