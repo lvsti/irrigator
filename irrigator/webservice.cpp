@@ -35,7 +35,7 @@ String renderStatusPage() {
     for (Valve v = 0; v < kNumValves; ++v) {
         page += renderTaskForm(DutyCycleManager.task(v));
     }
-    page += F("</p></body></html>");
+    page += F("</body></html>");
     return page;
 }
 
