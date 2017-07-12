@@ -7,14 +7,27 @@
 #include "http_request.h"
 #include "webservice.h"
 
-void connectToWiFi() {
+static const TimeInterval kConnectionTimeout = TimeInterval::withSeconds(10);
+
+
+bool ensureWifiConnection() {
+    if (WiFi.status() == WL_CONNECTED) {
+        return true;
+    }
+
     const char ssid[] = "*";
     const char password[] = "*";
     LOG(String(F("\n\nConnecting to ")) + ssid);
 
     WiFi.begin(ssid, password);
 
+    DeviceTime startTime = Clock.deviceTime();
+
     while (WiFi.status() != WL_CONNECTED) {
+        if (Clock.deviceTime().timeIntervalSince(startTime) > kConnectionTimeout) {
+            LOG(F("\nCouldn't connect to WiFi\n"));
+            return false;
+        }
         delay(500);
         LOG(".");
     }
@@ -55,12 +68,14 @@ void setup() {
         EEPROM.commit();
     }
 
-    connectToWiFi();
+    ensureWifiConnection();
 
     server.begin();
 }
 
 void loop() {
+    ensureWifiConnection();
+
     // Check if a client has connected
     WiFiClient client = server.available();
     if (client) {
