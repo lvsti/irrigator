@@ -1,26 +1,22 @@
-#include "time.h"
+#include "clock.h"
 
-#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-#include "common.h"
+static const int kSyncIntervalSeconds = 60 * 60 * 24;
 
-const char* kNTPServerName = "hu.pool.ntp.org";
+static const char* kNTPServerName = "hu.pool.ntp.org";
 
-const int kNTPPort = 123;
-const int kNTPPacketSize = 48;
-const int kLocalNTPPort = 2390;
+static const int kNTPPort = 123;
+static const int kNTPPacketSize = 48;
+static const int kLocalNTPPort = 2390;
 
-uint8_t packetBuffer[kNTPPacketSize]; //buffer to hold incoming and outgoing packets
+static const unsigned long kUnixEpochStartSeconds = 2208988800UL;
 
-const unsigned long kUnixEpochStartSeconds = 2208988800UL;
+ClockClass Clock;
 
-
-// A UDP instance to let us send and receive packets over UDP
 WiFiUDP udp;
-UnixTime startupTime;
-bool isValidStartupTime = false;
+uint8_t packetBuffer[kNTPPacketSize];
 
 // send an NTP request to the time server at the given address
 static void sendNTPPacket(IPAddress& address) {
@@ -42,11 +38,23 @@ static void sendNTPPacket(IPAddress& address) {
     udp.endPacket();
 }
 
-bool isNetworkTimeSynced() {
-    return isValidStartupTime;
+ClockClass::ClockClass(): 
+    _lastSuccessfulSyncTime(DeviceTime::distantPast()), 
+    _lastSyncTrialTime(DeviceTime::distantPast()), 
+    _startupTime(UnixTime::distantPast()) {
 }
 
-bool syncNetworkTime() {
+bool ClockClass::sync() {
+    if (!isIsolated() && deviceTime().timeIntervalSince(_lastSuccessfulSyncTime) < TimeInterval::withSeconds(kSyncIntervalSeconds)) {
+        return true;
+    }
+
+    _lastSyncTrialTime = deviceTime();
+    
+    if (WiFi.status() != WL_CONNECTED) {
+        return false;
+    }
+
     // get a random server from the pool
     IPAddress ntpServerIP;
     if (!WiFi.hostByName(kNTPServerName, ntpServerIP)) {
@@ -66,14 +74,20 @@ bool syncNetworkTime() {
         packetSize = udp.parsePacket();
     }
 
+    DeviceTime syncTime = deviceTime();
+
     if (packetSize == 0) {
         udp.stop();
         return false;
     }
 
     // We've received a packet, read the data from it
-    udp.read(packetBuffer, kNTPPacketSize); // read the packet into the buffer
+    int bytesRead = udp.read(packetBuffer, kNTPPacketSize);
     udp.stop();
+    
+    if (bytesRead != kNTPPacketSize) {
+        return false;
+    }
 
     // the timestamp starts at byte 40 of the received packet and is four bytes
     unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
@@ -81,19 +95,23 @@ bool syncNetworkTime() {
     // NTP time
     unsigned long secondsSince1900 = (highWord << 16) | lowWord;
     // unix timestamp
-    UnixTime now = secondsSince1900 - kUnixEpochStartSeconds;
-    unsigned long secondsSinceStartup = millis() / 1000;
+    unsigned long currentTimestamp = secondsSince1900 - kUnixEpochStartSeconds;
+    uint32_t startupTimestamp = currentTimestamp - syncTime.timeIntervalSinceReferenceTime().seconds();
 
-    startupTime = now - secondsSinceStartup;
-    isValidStartupTime = true;
+    _startupTime = UnixTime(startupTimestamp);
+    _lastSuccessfulSyncTime = syncTime;
+
+    return true;
 }
 
-bool getTime(UnixTime& time) {
-    if (!isValidStartupTime) {
-        return false;
-    }
+uint16_t ClockClass::_systemMillisOverflow = 0;
+unsigned long ClockClass::_lastSeenSystemMillis = 0;
 
-    unsigned long secondsSinceStartup = millis() / 1000;
-    time = startupTime + secondsSinceStartup;
-    return true;
+DeviceTime ClockClass::deviceTime() {
+    unsigned long ms = millis();
+    if (ms < ClockClass::_lastSeenSystemMillis) {
+        ++ClockClass::_systemMillisOverflow;
+    }
+    ClockClass::_lastSeenSystemMillis = ms;
+    return DeviceTime(ms, ClockClass::_systemMillisOverflow);
 }
