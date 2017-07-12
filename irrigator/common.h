@@ -16,8 +16,9 @@ typedef unsigned int Milliseconds;
 
 enum EEPROMOffsets {
     kEEFirmwareVersion = 0,
-    kEELastDutyCycleTime = kEEFirmwareVersion + sizeof(kFirmwareVersion),
-    kEETasks = kEELastDutyCycleTime + sizeof(unsigned long),
+    kEELastDutyCycleDeviceTime = kEEFirmwareVersion + sizeof(kFirmwareVersion),
+    kEELastDutyCycleUnixTime = kEELastDutyCycleDeviceTime + sizeof(uint64_t),
+    kEETasks = kEELastDutyCycleUnixTime + sizeof(uint32_t),
     kEESize = kEETasks + kNumValves * 20
 };
 

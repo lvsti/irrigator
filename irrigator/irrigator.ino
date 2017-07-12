@@ -1,10 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <EEPROM.h>
+#include "clock.h"
 #include "common.h"
 #include "duty_cycle_manager.h"
 #include "eeprom_ext.h"
 #include "http_request.h"
-#include "time.h"
 #include "webservice.h"
 
 void connectToWiFi() {
@@ -56,15 +56,6 @@ void setup() {
     }
 
     connectToWiFi();
-    
-    LOG("syncing network time...");
-    while (!isNetworkTimeSynced()) {
-        if (!syncNetworkTime()) {
-            LOG("failed...");
-            delay(5000);
-        }
-    }
-    LOG("done.\n");
 
     server.begin();
 }
@@ -75,6 +66,8 @@ void loop() {
     if (client) {
         serve(client);
     }
+
+    Clock.sync();
 
     if (DutyCycleManager.isDue()) {
         DutyCycleManager.run();

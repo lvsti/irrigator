@@ -21,9 +21,9 @@ public:
     void updateTask(const Task& task);
     const Task& task(int index) const { return _tasks[index]; }
 
-    bool isDue() const;
+    bool isDue();
     void run();
-    void restart();
+    void reset();
 
 private:
     void loadTasks();
@@ -31,7 +31,8 @@ private:
 
 private:
     Task _tasks[kNumValves];
-    UnixTime _lastCycleTime;
+    DeviceTime _lastCycleDeviceTime;
+    UnixTime _lastCycleUnixTime;
 };
 
 extern DutyCycleManagerClass DutyCycleManager;

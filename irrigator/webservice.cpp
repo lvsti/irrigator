@@ -127,13 +127,13 @@ void handleUpdateValve(const HTTPRequest& request, Stream& responseStream) {
     responseStream.print(renderRedirectToStatusPage());
 }
 
-void handleRestartDutyCycle(const HTTPRequest& request, Stream& responseStream) {
+void handleResetDutyCycle(const HTTPRequest& request, Stream& responseStream) {
     if (!isAuthorized(request)) {
         responseStream.print(renderUnauthorized());
         return;
     }
 
-    DutyCycleManager.restart();
+    DutyCycleManager.reset();
 
     responseStream.print(renderRedirectToStatusPage());
 }
@@ -147,8 +147,8 @@ void handleRequest(const HTTPRequest& request, Stream& responseStream) {
     if (request.method() == "POST" && request.uri().startsWith("/valve/")) {
         handleUpdateValve(request, responseStream);
     }
-    else if (request.method() == "POST" && request.uri() == "/restart/") {
-        handleRestartDutyCycle(request, responseStream);
+    else if (request.method() == "POST" && request.uri() == "/reset/") {
+        handleResetDutyCycle(request, responseStream);
     }
     else if (request.method() == "GET" && request.uri() == "/") {
         handleStatusQuery(request, responseStream);
