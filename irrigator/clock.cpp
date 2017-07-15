@@ -3,6 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
+static const int kSyncRetryIntervalSeconds = 60;
 static const int kSyncIntervalSeconds = 60 * 60 * 24;
 
 static const char* kNTPServerName = "hu.pool.ntp.org";
@@ -47,11 +48,17 @@ ClockClass::ClockClass():
 }
 
 bool ClockClass::sync() {
-    if (!isIsolated() && deviceTime().timeIntervalSince(_lastSuccessfulSyncTime) < TimeInterval::withSeconds(kSyncIntervalSeconds)) {
+    DeviceTime localTime = deviceTime();
+
+    if ((isIsolated() && localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds)) {
+        return false;
+    }
+
+    if (!isIsolated() && localTime.timeIntervalSince(_lastSuccessfulSyncTime) < TimeInterval::withSeconds(kSyncIntervalSeconds)) {
         return true;
     }
 
-    _lastSyncTrialTime = deviceTime();
+    _lastSyncTrialTime = localTime;
     
     if (WiFi.status() != WL_CONNECTED) {
         return false;
