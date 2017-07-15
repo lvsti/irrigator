@@ -32,9 +32,8 @@ private:
     DeviceTime _lastSyncTrialTime;
     UnixTime _startupTime;
 
-    static void readjust();
-    static uint16_t _systemMillisOverflow;
-    static unsigned long _lastSeenSystemMillis;
+    uint16_t _systemMillisOverflow;
+    unsigned long _lastSeenSystemMillis;
 };
 
 extern ClockClass Clock;

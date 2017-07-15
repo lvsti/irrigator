@@ -41,7 +41,9 @@ static void sendNTPPacket(IPAddress& address) {
 ClockClass::ClockClass(): 
     _lastSuccessfulSyncTime(DeviceTime::distantPast()), 
     _lastSyncTrialTime(DeviceTime::distantPast()), 
-    _startupTime(UnixTime::distantPast()) {
+    _startupTime(UnixTime::distantPast()),
+    _systemMillisOverflow(0),
+    _lastSeenSystemMillis(0) {
 }
 
 bool ClockClass::sync() {
@@ -104,14 +106,11 @@ bool ClockClass::sync() {
     return true;
 }
 
-uint16_t ClockClass::_systemMillisOverflow = 0;
-unsigned long ClockClass::_lastSeenSystemMillis = 0;
-
 DeviceTime ClockClass::deviceTime() {
     unsigned long ms = millis();
-    if (ms < ClockClass::_lastSeenSystemMillis) {
-        ++ClockClass::_systemMillisOverflow;
+    if (ms < _lastSeenSystemMillis) {
+        ++_systemMillisOverflow;
     }
-    ClockClass::_lastSeenSystemMillis = ms;
-    return DeviceTime(ms, ClockClass::_systemMillisOverflow);
+    _lastSeenSystemMillis = ms;
+    return DeviceTime(ms, _systemMillisOverflow);
 }
