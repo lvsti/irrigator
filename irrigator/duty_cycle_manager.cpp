@@ -10,8 +10,16 @@ static const uint32_t kDutyCycleIntervalSeconds = 60 * 60 * 24;
 DutyCycleManagerClass DutyCycleManager;
 
 DutyCycleManagerClass::DutyCycleManagerClass():
-    _lastCycleDeviceTime(Clock.deviceTime()), 
-    _lastCycleUnixTime(Clock.unixTimeFromDeviceTime(_lastCycleDeviceTime)) {
+    _lastCycleCumulativeTime(CumulativeTime::distantPast()),
+    _lastCycleUnixTime(UnixTime::distantPast()) {
+    
+    uint32_t seconds = 0;
+    get(EEPROM, kEELastDutyCycleCumulativeTimeSeconds, seconds);
+    _lastCycleCumulativeTime = CumulativeTime(Clock.deviceTime(), TimeInterval::withSeconds(seconds));
+
+    get(EEPROM, kEELastDutyCycleUnixTimeSeconds, seconds);
+    _lastCycleUnixTime = UnixTime(seconds);
+
     loadTasks();
 }
 
@@ -20,24 +28,28 @@ bool DutyCycleManagerClass::isDue() const {
 }
 
 TimeInterval DutyCycleManagerClass::timeIntervalSinceLastCycle() const {
-    DeviceTime now = Clock.deviceTime();
-    return now.timeIntervalSince(_lastCycleDeviceTime);
+    CumulativeTime now = Clock.cumulativeTime();
+    return now.timeIntervalSince(_lastCycleCumulativeTime);
 }
 
 TimeInterval DutyCycleManagerClass::timeIntervalTillNextCycle() const {
+    DeviceTime localTime = Clock.deviceTime();
     if (Clock.isIsolated()) {
-        DeviceTime localTime = Clock.deviceTime();
-        DeviceTime dueTime = _lastCycleDeviceTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
-        return dueTime.timeIntervalSince(localTime);
+        CumulativeTime dueTime = _lastCycleCumulativeTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+        return dueTime.timeIntervalSince(Clock.cumulativeTimeFromDeviceTime(localTime));
     }
 
-    UnixTime unixTime = Clock.unixTime();
-    UnixTime dueTime = _lastCycleUnixTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
-    return dueTime.timeIntervalSince(unixTime);
+    UnixTime lastCycleUnixTime = _lastCycleUnixTime;
+    if (lastCycleUnixTime == UnixTime::distantPast()) {
+        lastCycleUnixTime = Clock.unixTimeFromCumulativeTime(_lastCycleCumulativeTime);
+    }
+
+    UnixTime dueTime = lastCycleUnixTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+    return dueTime.timeIntervalSince(Clock.unixTimeFromDeviceTime(localTime));
 }
 
 void DutyCycleManagerClass::run() {
-    DeviceTime now = Clock.deviceTime();
+    DeviceTime cycleRunTime = Clock.deviceTime();
 
     for (Valve v = 0; v < kNumValves; ++v) {
         const Task& task = _tasks[v];
@@ -52,20 +64,29 @@ void DutyCycleManagerClass::run() {
         }
     }
 
-    _lastCycleDeviceTime = now;
-    put(EEPROM, kEELastDutyCycleDeviceTime, _lastCycleDeviceTime);
+    _lastCycleCumulativeTime = Clock.cumulativeTimeFromDeviceTime(cycleRunTime);
+    uint32_t seconds = _lastCycleCumulativeTime.timeIntervalSinceReferenceTime().seconds();
+    put(EEPROM, kEELastDutyCycleCumulativeTimeSeconds, seconds);
+
+    Clock.saveUptime();
 
     if (!Clock.isIsolated()) {
-        _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(_lastCycleDeviceTime);
-        put(EEPROM, kEELastDutyCycleUnixTime, _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds());
+        _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(cycleRunTime);
+        seconds = _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds();
+        put(EEPROM, kEELastDutyCycleUnixTimeSeconds, seconds);
     }
 }
 
 void DutyCycleManagerClass::reset() {
-    _lastCycleDeviceTime = Clock.deviceTime();
-    _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(_lastCycleDeviceTime);
-    put(EEPROM, kEELastDutyCycleDeviceTime, _lastCycleDeviceTime);
-    put(EEPROM, kEELastDutyCycleUnixTime, _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds());
+    _lastCycleCumulativeTime = Clock.cumulativeTime();
+    uint32_t seconds = _lastCycleCumulativeTime.timeIntervalSinceReferenceTime().seconds();
+    put(EEPROM, kEELastDutyCycleCumulativeTimeSeconds, seconds);
+
+    Clock.saveUptime();
+
+    _lastCycleUnixTime = Clock.unixTimeFromCumulativeTime(_lastCycleCumulativeTime);
+    seconds = _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds();
+    put(EEPROM, kEELastDutyCycleUnixTimeSeconds, _lastCycleUnixTime);
 }
 
 void DutyCycleManagerClass::updateTask(const Task& task) {

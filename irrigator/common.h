@@ -35,8 +35,8 @@ typedef unsigned int Milliseconds;
 EEPROM_LAYOUT_BEGIN
 
 EEPROM_CELL_TYPE(kEEFirmwareVersion, uint16_t)
-EEPROM_CELL_TYPE(kEELastDutyCycleDeviceTime, uint64_t)
-EEPROM_CELL_TYPE(kEELastDutyCycleUnixTime, uint32_t)
+EEPROM_CELL_TYPE(kEELastDutyCycleCumulativeTimeSeconds, uint32_t)
+EEPROM_CELL_TYPE(kEELastDutyCycleUnixTimeSeconds, uint32_t)
 EEPROM_CELL_TYPE(kEEPreviousUptimeSeconds, uint32_t)
 EEPROM_CELL_SIZE(kEETasks, kNumValves * 20)
 

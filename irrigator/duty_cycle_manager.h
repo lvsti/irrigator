@@ -34,7 +34,7 @@ private:
 
 private:
     Task _tasks[kNumValves];
-    DeviceTime _lastCycleDeviceTime;
+    CumulativeTime _lastCycleCumulativeTime;
     UnixTime _lastCycleUnixTime;
 };
 
