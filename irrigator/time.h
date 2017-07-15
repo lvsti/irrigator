@@ -18,7 +18,7 @@ public:
     }
 
     int32_t seconds() const {
-        return ((int32_t)_raw.components.sign << 32) | (int32_t)_raw.components.seconds;
+        return ((int32_t)_raw.components.sign << 31) | (int32_t)_raw.components.seconds;
     }
 
     int16_t milliseconds() const {
