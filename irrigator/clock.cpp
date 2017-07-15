@@ -2,9 +2,11 @@
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include "eeprom_ext.h"
 
 static const int kSyncRetryIntervalSeconds = 60;
 static const int kSyncIntervalSeconds = 60 * 60 * 24;
+static const int kUptimeSaveIntervalSeconds = 60 * 60;
 
 static const char* kNTPServerName = "hu.pool.ntp.org";
 
@@ -42,13 +44,20 @@ static void sendNTPPacket(IPAddress& address) {
 ClockClass::ClockClass(): 
     _lastSuccessfulSyncTime(DeviceTime::distantPast()), 
     _lastSyncTrialTime(DeviceTime::distantPast()), 
+    _lastUptimeSaveTime(DeviceTime::distantPast()),
     _startupTime(UnixTime::distantPast()),
+    _previousUptime(TimeInterval::withSeconds(0)),
     _systemMillisOverflow(0),
     _lastSeenSystemMillis(0) {
+    loadUptime();
 }
 
 bool ClockClass::sync() {
     DeviceTime localTime = deviceTime();
+
+    if (localTime.timeIntervalSince(_lastUptimeSaveTime) > TimeInterval::withSeconds(kUptimeSaveIntervalSeconds)) {
+        saveUptime();
+    }
 
     if ((isIsolated() && localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds)) {
         return false;
@@ -120,4 +129,17 @@ DeviceTime ClockClass::deviceTime() {
     }
     _lastSeenSystemMillis = ms;
     return DeviceTime(ms, _systemMillisOverflow);
+}
+
+void ClockClass::loadUptime() {
+    uint32_t uptimeSeconds = 0;
+    get(EEPROM, kEEPreviousUptimeSeconds, uptimeSeconds);
+    _previousUptime = TimeInterval::withSeconds(uptimeSeconds);
+}
+
+void ClockClass::saveUptime() {
+    DeviceTime localTime = deviceTime();
+    uint32_t uptimeSeconds = _previousUptime.seconds() + localTime.timeIntervalSinceReferenceTime().seconds();
+    put(EEPROM, kEEPreviousUptimeSeconds, uptimeSeconds);
+    _lastUptimeSaveTime = localTime;
 }

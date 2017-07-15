@@ -178,7 +178,7 @@ public:
     UnixTime(const Time<UnixTime>& base): Time(base) {}
 };
 
-// time since startup
+// time since last boot
 class DeviceTime: public Time<DeviceTime> {
 public:
     explicit DeviceTime(unsigned long msec, uint16_t overflow = 0):
@@ -188,5 +188,19 @@ public:
     DeviceTime(const Time<DeviceTime>& base): Time(base) {}
 };
 
+// approximate accumulated uptime since first boot
+class CumulativeTime: public Time<CumulativeTime> {
+public:
+    explicit CumulativeTime(const DeviceTime& localTime, 
+                            const TimeInterval& previousUptime = TimeInterval::withSeconds(0)):
+        Time(({
+            TimeInterval interval = localTime.timeIntervalSinceReferenceTime() + previousUptime;
+            (uint64_t)((interval.seconds() << TimeInterval::kFractionResolution) | 
+                       ((interval.fractionInMilliseconds() << TimeInterval::kFractionResolution) / 1000));
+        })) {
+    }
+
+    CumulativeTime(const Time<CumulativeTime>& base): Time(base) {}
+};
 
 #endif // __time_h
