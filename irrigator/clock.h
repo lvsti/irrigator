@@ -21,16 +21,28 @@ public:
         return _startupTime + interval;
     }
 
-    CumulativeTime cumulativeTime() {
-        return CumulativeTime(deviceTime(), _previousUptime);
-    }
-
     UnixTime unixTimeFromDeviceTime(const DeviceTime& dt) {
         if (isIsolated()) {
             return UnixTime::distantPast();
         }
         TimeInterval interval = dt.timeIntervalSinceReferenceTime();
         return _startupTime + interval;
+    }
+
+    UnixTime unixTimeFromCumulativeTime(const CumulativeTime& ct) {
+        if (isIsolated()) {
+            return UnixTime::distantPast();
+        }
+        TimeInterval interval = ct.timeIntervalSinceReferenceTime();
+        return _firstStartupTime + interval;
+    }
+
+    CumulativeTime cumulativeTime() {
+        return CumulativeTime(deviceTime(), _previousUptime);
+    }
+
+    CumulativeTime cumulativeTimeFromDeviceTime(const DeviceTime& dt) {
+        return CumulativeTime(dt, _previousUptime);
     }
 
 private:
@@ -41,6 +53,7 @@ private:
     DeviceTime _lastSyncTrialTime;
     DeviceTime _lastUptimeSaveTime;
     UnixTime _startupTime;
+    UnixTime _firstStartupTime;
     TimeInterval _previousUptime;
 
     uint16_t _systemMillisOverflow;

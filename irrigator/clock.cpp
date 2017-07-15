@@ -47,6 +47,7 @@ ClockClass::ClockClass():
     _lastSyncTrialTime(DeviceTime::distantPast()), 
     _lastUptimeSaveTime(DeviceTime::distantPast()),
     _startupTime(UnixTime::distantPast()),
+    _firstStartupTime(UnixTime::distantPast()),
     _previousUptime(TimeInterval::withSeconds(0)),
     _systemMillisOverflow(0),
     _lastSeenSystemMillis(0) {
@@ -116,8 +117,11 @@ bool ClockClass::sync() {
     // unix timestamp
     unsigned long currentTimestamp = secondsSince1900 - kUnixEpochStartSeconds;
     uint32_t startupTimestamp = currentTimestamp - syncTime.timeIntervalSinceReferenceTime().seconds();
+    uint32_t firstStartupTimestamp = currentTimestamp - cumulativeTimeFromDeviceTime(syncTime).timeIntervalSinceReferenceTime().seconds();
 
     _startupTime = UnixTime(startupTimestamp);
+    _firstStartupTime = UnixTime(firstStartupTimestamp);
+
     _lastSuccessfulSyncTime = syncTime;
 
     return true;
