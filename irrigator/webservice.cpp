@@ -4,10 +4,21 @@
 #include "duty_cycle_manager.h"
 #include "http_request.h"
 #include "string_ext.h"
+#include "time.h"
 
 static const char kWebserviceCredentials[] = "*:*";
 
-String renderTaskForm(const DutyCycleManagerClass::Task& task) {
+static String humanReadableTimeInterval(const TimeInterval& interval) {
+    int hours = abs(interval.seconds() / 3600);
+    int minutes = abs((interval.seconds() % 3600) / 60);
+    String space = hours > 0 && minutes > 0 ? " " : "";
+
+    return (hours > 0 ? String(hours) + "h" : String()) + 
+           space + 
+           (minutes > 0 ? String(minutes) + "min" : String());
+}
+
+static String renderTaskForm(const DutyCycleManagerClass::Task& task) {
     String form = F("<form method=\"post\" action=\"/valve/");
     form += String(task.valve + 1);
     form += F("/\"><h3><input type=\"checkbox\" name=\"is_enabled\"");
@@ -28,10 +39,15 @@ String renderTaskForm(const DutyCycleManagerClass::Task& task) {
     return form;
 }
 
-String renderStatusPage() {
+static String renderStatusPage() {
     String page = F("HTTP/1.1 200 OK\r\n");
     page += F("Content-Type: text/html\r\n\r\n");
     page += F("<!DOCTYPE HTML><html><title>Irrigator</title><body><h1>Irrigator Status</h1>");
+    page += F("<p>Last cycle executed: ");
+    page += humanReadableTimeInterval(DutyCycleManager.timeIntervalSinceLastCycle());
+    page += F(" ago<br/>Next cycle due: in ");
+    page += humanReadableTimeInterval(DutyCycleManager.timeIntervalTillNextCycle());
+    page += F("</p>");
     for (Valve v = 0; v < kNumValves; ++v) {
         page += renderTaskForm(DutyCycleManager.task(v));
     }
@@ -39,7 +55,7 @@ String renderStatusPage() {
     return page;
 }
 
-String renderUnauthorized() {
+static String renderUnauthorized() {
     String page = F("HTTP/1.1 401 Unauthorized\r\n");
     page += F("WWW-Authenticate: Basic realm=\"Irrigator\"\r\n");
     page += F("Content-Type: text/html\r\n\r\n");
@@ -48,13 +64,13 @@ String renderUnauthorized() {
     return page;
 }
 
-String renderRedirectToStatusPage() {
+static String renderRedirectToStatusPage() {
     String page = F("HTTP/1.1 303 See Other\r\n");
     page += F("Location: /\r\n\r\n");
     return page;
 }
 
-String renderBadRequest() {
+static String renderBadRequest() {
     String page = F("HTTP/1.1 400 Bad Request\r\n");
     page += F("Content-Type: text/html\r\n\r\n");
     page += F("<html><head><title>400 Bad Request</title></head><body>");
@@ -62,7 +78,7 @@ String renderBadRequest() {
     return page;
 }
 
-String renderNotFound() {
+static String renderNotFound() {
     String page = F("HTTP/1.1 404 Not Found\r\n");
     page += F("Content-Type: text/html\r\n\r\n");
     page += F("<html><head><title>404 Not Found</title></head><body>");
@@ -70,7 +86,7 @@ String renderNotFound() {
     return page;
 }
 
-bool isAuthorized(const HTTPRequest& request) {
+static bool isAuthorized(const HTTPRequest& request) {
     auto it = request.headers().iterator();
     HTTPHeaderField* field = it.next();
     while (field) {
@@ -88,7 +104,7 @@ bool isAuthorized(const HTTPRequest& request) {
     return false;
 }
 
-void handleUpdateValve(const HTTPRequest& request, Stream& responseStream) {
+static void handleUpdateValve(const HTTPRequest& request, Stream& responseStream) {
     if (!isAuthorized(request)) {
         responseStream.print(renderUnauthorized());
         return;
@@ -127,7 +143,7 @@ void handleUpdateValve(const HTTPRequest& request, Stream& responseStream) {
     responseStream.print(renderRedirectToStatusPage());
 }
 
-void handleResetDutyCycle(const HTTPRequest& request, Stream& responseStream) {
+static void handleResetDutyCycle(const HTTPRequest& request, Stream& responseStream) {
     if (!isAuthorized(request)) {
         responseStream.print(renderUnauthorized());
         return;
@@ -138,7 +154,7 @@ void handleResetDutyCycle(const HTTPRequest& request, Stream& responseStream) {
     responseStream.print(renderRedirectToStatusPage());
 }
 
-void handleStatusQuery(const HTTPRequest& request, Stream& responseStream) {
+static void handleStatusQuery(const HTTPRequest& request, Stream& responseStream) {
     responseStream.print(renderStatusPage());
 }
 
