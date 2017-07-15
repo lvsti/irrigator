@@ -55,7 +55,7 @@ void setup() {
     delay(10);
 
     EEPROM.begin(kEESize);
-    unsigned int firmwareVersion = -1;
+    uint16_t firmwareVersion = -1;
     get(EEPROM, kEEFirmwareVersion, firmwareVersion);
 
     if (firmwareVersion != kFirmwareVersion) {
