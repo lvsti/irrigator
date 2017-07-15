@@ -19,15 +19,16 @@ typedef unsigned int Milliseconds;
     kEE_LAYOUT_BEGIN = -1,
 
 #define EEPROM_LAYOUT_END \
+    kEESize \
     };
 
 #define EEPROM_CELL_TYPE(__alias__, __type__) \
-    __alias__,
-    __alias__##_END = alias + sizeof(__type__) - 1,
+    __alias__, \
+    __alias__##_END = __alias__ + sizeof(__type__) - 1,
 
 #define EEPROM_CELL_SIZE(__alias__, __size__) \
-    __alias__,
-    __alias__##_END = alias + (__size__) - 1,
+    __alias__, \
+    __alias__##_END = __alias__ + (__size__) - 1,
 
 
 

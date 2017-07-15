@@ -2,6 +2,7 @@
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include "common.h"
 #include "eeprom_ext.h"
 
 static const int kSyncRetryIntervalSeconds = 60;
@@ -59,7 +60,7 @@ bool ClockClass::sync() {
         saveUptime();
     }
 
-    if ((isIsolated() && localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds)) {
+    if (isIsolated() && localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds)) {
         return false;
     }
 
