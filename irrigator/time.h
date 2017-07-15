@@ -17,6 +17,14 @@ public:
         return TimeInterval((msec << kFractionResolution) / 1000);
     }
 
+    static TimeInterval neverInThePast() {
+        return TimeInterval(~0);
+    }
+
+    static TimeInterval neverInTheFuture() {
+        return TimeInterval(~0 ^ (1 << 63));
+    }
+
     int32_t seconds() const {
         return ((int32_t)_raw.components.sign << 31) | (int32_t)_raw.components.seconds;
     }
@@ -94,8 +102,8 @@ private:
 template <typename T>
 class Time {
 public:
-    static T distantPast() { return Time(~0); }
-    static T distantFuture() { return Time(~0 ^ (1 << 63)); }
+    static T distantPast() { return Time(TimeInterval::neverInThePast()._raw.ticks); }
+    static T distantFuture() { return Time(TimeInterval::neverInTheFuture()._raw.ticks); }
 
     uint32_t seconds() const { return _interval.seconds(); }
     uint16_t milliseconds() const { return _interval.milliseconds(); }
