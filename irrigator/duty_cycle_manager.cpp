@@ -15,25 +15,25 @@ DutyCycleManagerClass::DutyCycleManagerClass():
     loadTasks();
 }
 
-void DutyCycleManagerClass::updateTask(const Task& task) {
-    _tasks[task.valve] = task;
-    saveTasks();
+bool DutyCycleManagerClass::isDue() const {
+    return timeIntervalTillNextCycle().seconds() <= 0;
 }
 
-bool DutyCycleManagerClass::isDue() {
+TimeInterval DutyCycleManagerClass::timeIntervalSinceLastCycle() const {
     DeviceTime now = Clock.deviceTime();
-    auto elapsed = now.timeIntervalSince(_lastCycleDeviceTime);
+    return now.timeIntervalSince(_lastCycleDeviceTime);
+}
 
+TimeInterval DutyCycleManagerClass::timeIntervalTillNextCycle() const {
     if (Clock.isIsolated()) {
-        return elapsed > TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+        DeviceTime localTime = Clock.deviceTime();
+        DeviceTime dueTime = _lastCycleDeviceTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+        return dueTime.timeIntervalSince(localTime);
     }
 
-    if (_lastCycleUnixTime == UnixTime::distantPast()) {
-        _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(_lastCycleDeviceTime);
-    }
-
-    elapsed = Clock.unixTimeFromDeviceTime(now).timeIntervalSince(_lastCycleUnixTime); 
-    return elapsed > TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+    UnixTime unixTime = Clock.unixTime();
+    UnixTime dueTime = _lastCycleUnixTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+    return dueTime.timeIntervalSince(unixTime);
 }
 
 void DutyCycleManagerClass::run() {
@@ -53,9 +53,12 @@ void DutyCycleManagerClass::run() {
     }
 
     _lastCycleDeviceTime = now;
-    _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(_lastCycleDeviceTime);
     put(EEPROM, kEELastDutyCycleDeviceTime, _lastCycleDeviceTime);
-    put(EEPROM, kEELastDutyCycleUnixTime, _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds());
+
+    if (!Clock.isIsolated()) {
+        _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(_lastCycleDeviceTime);
+        put(EEPROM, kEELastDutyCycleUnixTime, _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds());
+    }
 }
 
 void DutyCycleManagerClass::reset() {
@@ -63,6 +66,11 @@ void DutyCycleManagerClass::reset() {
     _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(_lastCycleDeviceTime);
     put(EEPROM, kEELastDutyCycleDeviceTime, _lastCycleDeviceTime);
     put(EEPROM, kEELastDutyCycleUnixTime, _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds());
+}
+
+void DutyCycleManagerClass::updateTask(const Task& task) {
+    _tasks[task.valve] = task;
+    saveTasks();
 }
 
 void DutyCycleManagerClass::loadTasks() {

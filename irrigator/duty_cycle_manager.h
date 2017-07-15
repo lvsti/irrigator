@@ -21,7 +21,10 @@ public:
     void updateTask(const Task& task);
     const Task& task(int index) const { return _tasks[index]; }
 
-    bool isDue();
+    bool isDue() const;
+    TimeInterval timeIntervalSinceLastCycle() const;
+    TimeInterval timeIntervalTillNextCycle() const;
+
     void run();
     void reset();
 
