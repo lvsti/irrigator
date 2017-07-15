@@ -29,7 +29,7 @@ public:
         return ((int32_t)_raw.components.sign << 31) | (int32_t)_raw.components.seconds;
     }
 
-    int16_t milliseconds() const {
+    int16_t fractionInMilliseconds() const {
         return ((int16_t)_raw.components.sign << 15) | ((int32_t)_raw.components.fraction * 1000) >> kFractionResolution;
     }
 
@@ -106,7 +106,7 @@ public:
     static T distantFuture() { return Time(TimeInterval::neverInTheFuture()._raw.ticks); }
 
     uint32_t seconds() const { return _interval.seconds(); }
-    uint16_t milliseconds() const { return _interval.milliseconds(); }
+    uint16_t fractionInMilliseconds() const { return _interval.fractionInMilliseconds(); }
 
     T operator+(const TimeInterval& ti) const {
         T t = *this;
