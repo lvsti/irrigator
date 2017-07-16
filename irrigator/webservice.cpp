@@ -8,16 +8,6 @@
 
 static const char kWebserviceCredentials[] = "*:*";
 
-static String humanReadableTimeInterval(const TimeInterval& interval) {
-    int hours = abs(interval.seconds() / 3600);
-    int minutes = abs((interval.seconds() % 3600) / 60);
-    String space = hours > 0 && minutes > 0 ? " " : "";
-
-    return (hours > 0 ? String(hours) + "h" : String()) + 
-           space + 
-           (minutes > 0 ? String(minutes) + "min" : String());
-}
-
 static String renderTaskForm(const DutyCycleManagerClass::Task& task) {
     String form = F("<form method=\"post\" action=\"/valve/");
     form += String(task.valve + 1);
@@ -44,9 +34,9 @@ static String renderStatusPage() {
     page += F("Content-Type: text/html\r\n\r\n");
     page += F("<!DOCTYPE HTML><html><title>Irrigator</title><body><h1>Irrigator Status</h1>");
     page += F("<p>Last cycle executed: ");
-    page += humanReadableTimeInterval(DutyCycleManager.timeIntervalSinceLastCycle());
+    page += DutyCycleManager.timeIntervalSinceLastCycle().toHumanReadableString();
     page += F(" ago<br/>Next cycle due: in ");
-    page += humanReadableTimeInterval(DutyCycleManager.timeIntervalTillNextCycle());
+    page += DutyCycleManager.timeIntervalTillNextCycle().toHumanReadableString();
     page += F("</p>");
     for (Valve v = 0; v < kNumValves; ++v) {
         page += renderTaskForm(DutyCycleManager.task(v));

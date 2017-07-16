@@ -1,6 +1,7 @@
 #ifndef __time_h
 #define __time_h
 
+#include <WString.h>
 #include <stdint.h>
 
 template <typename T> class Time;
@@ -78,6 +79,8 @@ public:
     bool operator>=(const TimeInterval& other) const {
         return _raw.ticks >= other._raw.ticks;
     }
+
+    String toHumanReadableString() const;
 
 private:
     TimeInterval(uint64_t ticks) {
