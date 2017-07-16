@@ -88,15 +88,17 @@ private:
     } 
     
 private:
+#pragma pack(push, 1)
     union {
         int64_t ticks;
         struct {
-            unsigned sign:1;
-            unsigned :(32 - kFractionResolution);
-            unsigned seconds:31;
             unsigned fraction:kFractionResolution;
+            unsigned seconds:31;
+            unsigned :(32 - kFractionResolution);
+            unsigned sign:1;
         } components;
     } _raw;
+#pragma pack(pop)
 
     template <typename T> friend class Time;
 };
