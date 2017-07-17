@@ -11,7 +11,9 @@ DutyCycleManagerClass DutyCycleManager;
 DutyCycleManagerClass::DutyCycleManagerClass():
     _lastCycleCumulativeTime(CumulativeTime::distantPast()),
     _lastCycleUnixTime(UnixTime::distantPast()) {
-    
+}
+
+void DutyCycleManagerClass::loadState() {
     uint32_t seconds = 0;
     EEPROM.get(kEELastDutyCycleCumulativeTimeSeconds, seconds);
     _lastCycleCumulativeTime = CumulativeTime(Clock.deviceTime(), TimeInterval::withSeconds(seconds));

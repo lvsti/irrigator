@@ -66,6 +66,7 @@ void setup() {
     }
 
     Clock.loadUptime();
+    DutyCycleManager.loadState();
 
     ensureWifiConnection();
 

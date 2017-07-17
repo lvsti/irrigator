@@ -18,6 +18,8 @@ public:
 public:
     DutyCycleManagerClass();
 
+    void loadState();
+
     void updateTask(const Task& task);
     const Task& task(int index) const { return _tasks[index]; }
 
