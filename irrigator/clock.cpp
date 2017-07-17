@@ -61,7 +61,9 @@ bool ClockClass::sync() {
         saveUptime();
     }
 
-    if (isIsolated() && localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds)) {
+    if (isIsolated() && 
+        (_lastSyncTrialTime != DeviceTime::distantPast() && 
+         localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds))) {
         return false;
     }
 
