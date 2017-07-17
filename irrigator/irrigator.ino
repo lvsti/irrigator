@@ -3,7 +3,6 @@
 #include "clock.h"
 #include "common.h"
 #include "duty_cycle_manager.h"
-#include "eeprom_ext.h"
 #include "http_request.h"
 #include "webservice.h"
 
@@ -56,15 +55,13 @@ void setup() {
 
     EEPROM.begin(kEESize);
     uint16_t firmwareVersion = -1;
-    get(EEPROM, kEEFirmwareVersion, firmwareVersion);
+    EEPROM.get(kEEFirmwareVersion, firmwareVersion);
 
     if (firmwareVersion != kFirmwareVersion) {
         // reset EEPROM
         uint8_t* ptr = EEPROM.getDataPtr();
-        for (int i = 0; i < kEESize; ++i, ++ptr) {
-            *ptr = 0;
-        }
-        put(EEPROM, kEEFirmwareVersion, kFirmwareVersion);
+        memset(ptr, 0, kEESize);
+        EEPROM.put(kEEFirmwareVersion, kFirmwareVersion);
         EEPROM.commit();
     }
 

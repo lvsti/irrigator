@@ -1,9 +1,9 @@
 #include "clock.h"
 
+#include <EEPROM.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include "common.h"
-#include "eeprom_ext.h"
 
 static const int kSyncRetryIntervalSeconds = 60;
 static const int kSyncIntervalSeconds = 60 * 60 * 24;
@@ -139,13 +139,13 @@ DeviceTime ClockClass::deviceTime() {
 
 void ClockClass::loadUptime() {
     uint32_t uptimeSeconds = 0;
-    get(EEPROM, kEEPreviousUptimeSeconds, uptimeSeconds);
+    EEPROM.get(kEEPreviousUptimeSeconds, uptimeSeconds);
     _previousUptime = TimeInterval::withSeconds(uptimeSeconds);
 }
 
 void ClockClass::saveUptime() {
     DeviceTime localTime = deviceTime();
     uint32_t uptimeSeconds = _previousUptime.seconds() + localTime.timeIntervalSinceReferenceTime().seconds();
-    put(EEPROM, kEEPreviousUptimeSeconds, uptimeSeconds);
+    EEPROM.put(kEEPreviousUptimeSeconds, uptimeSeconds);
     _lastUptimeSaveTime = localTime;
 }

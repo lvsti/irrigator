@@ -2,7 +2,6 @@
 
 #include <EEPROM.h>
 #include "clock.h"
-#include "eeprom_ext.h"
 #include "irrigator.h"
 
 static const uint32_t kDutyCycleIntervalSeconds = 60 * 60 * 24;
@@ -14,10 +13,10 @@ DutyCycleManagerClass::DutyCycleManagerClass():
     _lastCycleUnixTime(UnixTime::distantPast()) {
     
     uint32_t seconds = 0;
-    get(EEPROM, kEELastDutyCycleCumulativeTimeSeconds, seconds);
+    EEPROM.get(kEELastDutyCycleCumulativeTimeSeconds, seconds);
     _lastCycleCumulativeTime = CumulativeTime(Clock.deviceTime(), TimeInterval::withSeconds(seconds));
 
-    get(EEPROM, kEELastDutyCycleUnixTimeSeconds, seconds);
+    EEPROM.get(kEELastDutyCycleUnixTimeSeconds, seconds);
     _lastCycleUnixTime = UnixTime(seconds);
 
     loadTasks();
@@ -66,27 +65,27 @@ void DutyCycleManagerClass::run() {
 
     _lastCycleCumulativeTime = Clock.cumulativeTimeFromDeviceTime(cycleRunTime);
     uint32_t seconds = _lastCycleCumulativeTime.timeIntervalSinceReferenceTime().seconds();
-    put(EEPROM, kEELastDutyCycleCumulativeTimeSeconds, seconds);
+    EEPROM.put(kEELastDutyCycleCumulativeTimeSeconds, seconds);
 
     Clock.saveUptime();
 
     if (!Clock.isIsolated()) {
         _lastCycleUnixTime = Clock.unixTimeFromDeviceTime(cycleRunTime);
         seconds = _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds();
-        put(EEPROM, kEELastDutyCycleUnixTimeSeconds, seconds);
+        EEPROM.put(kEELastDutyCycleUnixTimeSeconds, seconds);
     }
 }
 
 void DutyCycleManagerClass::reset() {
     _lastCycleCumulativeTime = Clock.cumulativeTime();
     uint32_t seconds = _lastCycleCumulativeTime.timeIntervalSinceReferenceTime().seconds();
-    put(EEPROM, kEELastDutyCycleCumulativeTimeSeconds, seconds);
+    EEPROM.put(kEELastDutyCycleCumulativeTimeSeconds, seconds);
 
     Clock.saveUptime();
 
     _lastCycleUnixTime = Clock.unixTimeFromCumulativeTime(_lastCycleCumulativeTime);
     seconds = _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds();
-    put(EEPROM, kEELastDutyCycleUnixTimeSeconds, _lastCycleUnixTime);
+    EEPROM.put(kEELastDutyCycleUnixTimeSeconds, _lastCycleUnixTime);
 }
 
 void DutyCycleManagerClass::updateTask(const Task& task) {
@@ -98,7 +97,7 @@ void DutyCycleManagerClass::loadTasks() {
     int addr = kEETasks;
 
     for (Valve v = 0; v < kNumValves; ++v) {
-        get(EEPROM, addr, _tasks[v]);
+        EEPROM.get(addr, _tasks[v]);
         _tasks[v].valve = v;
         addr += sizeof(Task);
     }
@@ -108,7 +107,7 @@ void DutyCycleManagerClass::saveTasks() {
     int addr = kEETasks;
 
     for (Valve v = 0; v < kNumValves; ++v) {
-        put(EEPROM, addr, _tasks[v]);
+        EEPROM.put(addr, _tasks[v]);
         addr += sizeof(Task);
     }
 }
