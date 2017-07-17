@@ -56,7 +56,8 @@ ClockClass::ClockClass():
 bool ClockClass::sync() {
     DeviceTime localTime = deviceTime();
 
-    if (localTime.timeIntervalSince(_lastUptimeSaveTime) > TimeInterval::withSeconds(kUptimeSaveIntervalSeconds)) {
+    if (_lastUptimeSaveTime == DeviceTime::distantPast() ||
+        localTime.timeIntervalSince(_lastUptimeSaveTime) > TimeInterval::withSeconds(kUptimeSaveIntervalSeconds)) {
         saveUptime();
     }
 
