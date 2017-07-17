@@ -9,6 +9,8 @@ public:
 
     bool isIsolated() const { return _startupTime == UnixTime::distantPast(); }
     bool sync();
+
+    void loadUptime();
     void saveUptime();
 
     DeviceTime deviceTime();
@@ -44,9 +46,6 @@ public:
     CumulativeTime cumulativeTimeFromDeviceTime(const DeviceTime& dt) {
         return CumulativeTime(dt, _previousUptime);
     }
-
-private:
-    void loadUptime();
 
 private:
     DeviceTime _lastSuccessfulSyncTime;

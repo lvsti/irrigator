@@ -51,7 +51,6 @@ ClockClass::ClockClass():
     _previousUptime(TimeInterval::withSeconds(0)),
     _systemMillisOverflow(0),
     _lastSeenSystemMillis(0) {
-    loadUptime();
 }
 
 bool ClockClass::sync() {

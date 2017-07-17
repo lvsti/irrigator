@@ -68,6 +68,8 @@ void setup() {
         EEPROM.commit();
     }
 
+    Clock.loadUptime();
+
     ensureWifiConnection();
 
     server.begin();
