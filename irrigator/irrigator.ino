@@ -64,7 +64,7 @@ void setup() {
         for (int i = 0; i < kEESize; ++i, ++ptr) {
             *ptr = 0;
         }
-        put(EEPROM, kEEFirmwareVersion, firmwareVersion);
+        put(EEPROM, kEEFirmwareVersion, kFirmwareVersion);
         EEPROM.commit();
     }
 
