@@ -57,6 +57,13 @@ ClockClass::ClockClass():
 
 bool ClockClass::sync() {
     DeviceTime localTime = deviceTime();
+    LOG(String(F("[Clock] Device time is: ")) + 
+        localTime.timeIntervalSinceReferenceTime().toHumanReadableString() + 
+        " (" + String(localTime.timeIntervalSinceReferenceTime().seconds()) + ")\n");
+    CumulativeTime ct = cumulativeTime();
+    LOG(String(F("[Clock] Cumulative uptime is: ")) + 
+        ct.timeIntervalSinceReferenceTime().toHumanReadableString() + 
+        " (" + String(ct.timeIntervalSinceReferenceTime().seconds()) + ")\n");
 
     if (_lastUptimeSaveTime == DeviceTime::distantPast() ||
         localTime.timeIntervalSince(_lastUptimeSaveTime) > TimeInterval::withSeconds(kUptimeSaveIntervalSeconds)) {
@@ -66,22 +73,28 @@ bool ClockClass::sync() {
     if (isIsolated() && 
         (_lastSyncTrialTime != DeviceTime::distantPast() && 
          localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds))) {
+        LOG(F("[Clock] Not syncing (isolated): timeout hasn't passed since last failed trial\n"));
         return false;
     }
 
     if (!isIsolated() && localTime.timeIntervalSince(_lastSuccessfulSyncTime) < TimeInterval::withSeconds(kSyncIntervalSeconds)) {
+        LOG(F("[Clock] Not syncing (already synced): timeout hasn't passed since last successful sync\n"));
         return true;
     }
 
     _lastSyncTrialTime = localTime;
+
+    LOG(F("[Clock] Syncing network time..."));
     
     if (WiFi.status() != WL_CONNECTED) {
+        LOG(F("failed: not connected\n"));
         return false;
     }
 
     // get a random server from the pool
     IPAddress ntpServerIP;
     if (!WiFi.hostByName(kNTPServerName, ntpServerIP)) {
+        LOG(F("failed: cannot resolve NTP host\n"));
         return false;
     }
 
@@ -102,6 +115,7 @@ bool ClockClass::sync() {
 
     if (packetSize == 0) {
         udp.stop();
+        LOG(F("failed: empty response\n"));
         return false;
     }
 
@@ -110,6 +124,7 @@ bool ClockClass::sync() {
     udp.stop();
     
     if (bytesRead != kNTPPacketSize) {
+        LOG(F("failed: unexpected NTP response\n"));
         return false;
     }
 
@@ -127,6 +142,8 @@ bool ClockClass::sync() {
     _firstStartupTime = UnixTime(firstStartupTimestamp);
 
     _lastSuccessfulSyncTime = syncTime;
+    
+    LOG(F("done\n"));
 
     return true;
 }
@@ -144,6 +161,11 @@ void ClockClass::loadUptime() {
     uint32_t uptimeSeconds = 0;
     EEPROM.get(kEEPreviousUptimeSeconds, uptimeSeconds);
     _previousUptime = TimeInterval::withSeconds(uptimeSeconds);
+    LOG(String(F("[Clock] Loaded previous uptime: ")) + 
+        _previousUptime.toHumanReadableString() + 
+        " (" +
+        String(uptimeSeconds) +
+        ")\n");
 }
 
 void ClockClass::saveUptime() {
@@ -151,4 +173,7 @@ void ClockClass::saveUptime() {
     uint32_t uptimeSeconds = _previousUptime.seconds() + localTime.timeIntervalSinceReferenceTime().seconds();
     EEPROM.put(kEEPreviousUptimeSeconds, uptimeSeconds);
     _lastUptimeSaveTime = localTime;
+    LOG(String(F("[Clock] Saved current uptime (")) + 
+        TimeInterval::withSeconds(uptimeSeconds).toHumanReadableString() +
+        ")\n");
 }

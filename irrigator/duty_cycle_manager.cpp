@@ -14,18 +14,28 @@ DutyCycleManagerClass::DutyCycleManagerClass():
 }
 
 void DutyCycleManagerClass::loadState() {
+    LOG(F("[DutyCycleManager] Last cycle run time (stored):\n"));
+
     uint32_t seconds = 0;
     EEPROM.get(kEELastDutyCycleCumulativeTimeSeconds, seconds);
     _lastCycleCumulativeTime = CumulativeTime(Clock.deviceTime(), TimeInterval::withSeconds(seconds));
+    LOG(String(F("[DutyCycleManager]  - cumulative uptime: ")) + 
+        _lastCycleCumulativeTime.timeIntervalSinceReferenceTime().toHumanReadableString() + 
+        "\n");
 
     EEPROM.get(kEELastDutyCycleUnixTimeSeconds, seconds);
     _lastCycleUnixTime = UnixTime(seconds);
+    LOG(String(F("[DutyCycleManager]  - network time: ")) + 
+        String(_lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds()) + 
+        "\n");
 
     loadTasks();
 }
 
 bool DutyCycleManagerClass::isDue() const {
-    return timeIntervalTillNextCycle().seconds() <= 0;
+    int32_t seconds = timeIntervalTillNextCycle().seconds();
+    LOG(String(F("[DutyCycleManager] next cycle should begin in ")) + String(seconds) + " sec\n");
+    return seconds <= 0;
 }
 
 TimeInterval DutyCycleManagerClass::timeIntervalSinceLastCycle() const {
@@ -50,6 +60,7 @@ TimeInterval DutyCycleManagerClass::timeIntervalTillNextCycle() const {
 }
 
 void DutyCycleManagerClass::run() {
+    LOG(F("[DutyCycleManager] Starting duty cycle.\n"));
     DeviceTime cycleRunTime = Clock.deviceTime();
 
     for (Valve v = 0; v < kNumValves; ++v) {
@@ -61,7 +72,7 @@ void DutyCycleManagerClass::run() {
             Irrigator.performTask(t);
         } 
         else {
-            LOG(String(F("skipping task for valve ")) + String(v) + String(F(": disabled\n")));
+            LOG(String(F("[DutyCycleManager] skipping task for valve ")) + String(v) + String(F(": disabled\n")));
         }
     }
 
@@ -76,6 +87,8 @@ void DutyCycleManagerClass::run() {
         seconds = _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds();
         EEPROM.put(kEELastDutyCycleUnixTimeSeconds, seconds);
     }
+
+    LOG(F("[DutyCycleManager] Duty cycle finished.\n"));
 }
 
 void DutyCycleManagerClass::reset() {

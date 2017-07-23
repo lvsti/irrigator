@@ -53,17 +53,29 @@ void setup() {
     Serial.begin(115200);
     delay(10);
 
+    LOG(String(F("[main] EEPROM size: ")) + String(kEESize) + "\n");
+
     EEPROM.begin(kEESize);
     uint16_t firmwareVersion = -1;
     EEPROM.get(kEEFirmwareVersion, firmwareVersion);
 
     if (firmwareVersion != kFirmwareVersion) {
         // reset EEPROM
+        LOG(F("[main] firmware version changed, resetting EEPROM\n"));
         uint8_t* ptr = EEPROM.getDataPtr();
         memset(ptr, 0, kEESize);
         EEPROM.put(kEEFirmwareVersion, kFirmwareVersion);
         EEPROM.commit();
     }
+
+    uint8_t* ptr = EEPROM.getDataPtr();
+    for (int i = 0; i < kEESize; ++i, ++ptr) {
+        LOG(String(*ptr, 16) + " ");
+        if (i % 16 == 15) {
+            LOG("\n");
+        }
+    }
+    LOG("\n");
 
     Clock.loadUptime();
     DutyCycleManager.loadState();
