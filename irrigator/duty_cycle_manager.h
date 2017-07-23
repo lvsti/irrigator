@@ -6,14 +6,16 @@
 
 class DutyCycleManagerClass {
 public:
+#pragma pack(push, 1)
     struct Task {
         static const int kDescriptionMaxLength = 15;
 
-        bool isEnabled;
-        char description[kDescriptionMaxLength + 1];
         Valve valve;
-        Milliseconds duration;
+        bool isEnabled;
+        Seconds duration;
+        char description[kDescriptionMaxLength + 1];
     };
+#pragma pack(pop)
 
 public:
     DutyCycleManagerClass();

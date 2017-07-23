@@ -7,7 +7,7 @@ class IrrigatorClass {
 public:
     struct Task {
         Valve valve;
-        Milliseconds duration;
+        Seconds duration;
     };
 
 public:

@@ -23,11 +23,11 @@ void IrrigatorClass::closeValve(Valve valve) {
 }
 
 void IrrigatorClass::performTask(Task& task) {
-    LOG(String(F("starting task for valve ")) + String(task.valve) + ": " + String(task.duration) + "ms\n");
+    LOG(String(F("starting task for valve ")) + String(task.valve) + ": " + String(task.duration) + "sec\n");
     openValve(task.valve);
     delay(kValveOpenTransientTime);
 
-    delay(task.duration);
+    delay(task.duration * 1000);
 
     closeValve(task.valve);
     delay(kValveCloseTransientTime);

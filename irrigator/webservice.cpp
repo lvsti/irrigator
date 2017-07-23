@@ -24,7 +24,7 @@ static String renderTaskForm(const DutyCycleManagerClass::Task& task) {
     form += F("\"/><br/>");
     form += F("Duration: <input type=\"text\" name=\"duration\" value=\"");
     form += task.duration;
-    form += F("\"/>ms</p>");
+    form += F("\"/>sec</p>");
     form += F("<p><input type=\"submit\" value=\"Apply\"/></p></form>");
     return form;
 }

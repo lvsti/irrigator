@@ -12,7 +12,8 @@ static const int kNumValves = 6;
 extern const uint8_t pinDForValve[];
 
 typedef uint8_t Valve;
-typedef unsigned int Milliseconds;
+typedef uint16_t Milliseconds;
+typedef uint16_t Seconds;
 
 #define EEPROM_LAYOUT_BEGIN \
     enum EEPROMOffsets { \
