@@ -63,8 +63,8 @@ void DutyCycleManagerClass::run() {
     LOG(F("[DutyCycleManager] Starting duty cycle.\n"));
     DeviceTime cycleRunTime = Clock.deviceTime();
 
-    for (Valve v = 0; v < kNumValves; ++v) {
-        const Task& task = _tasks[v];
+    for (int i = 0; i < kNumOutputValves; ++i) {
+        const Task& task = _tasks[i];
         if (task.isEnabled) {
             IrrigatorClass::Task t;
             t.valve = task.valve;
@@ -72,7 +72,7 @@ void DutyCycleManagerClass::run() {
             Irrigator.performTask(t);
         } 
         else {
-            LOG(String(F("[DutyCycleManager] skipping task for valve ")) + String(v) + String(F(": disabled\n")));
+            LOG(String(F("[DutyCycleManager] skipping task for valve ")) + String(task.valve) + String(F(": disabled\n")));
         }
     }
 
@@ -111,9 +111,9 @@ void DutyCycleManagerClass::updateTask(const Task& task) {
 void DutyCycleManagerClass::loadTasks() {
     int addr = kEETasks;
 
-    for (Valve v = 0; v < kNumValves; ++v) {
-        EEPROM.get(addr, _tasks[v]);
-        _tasks[v].valve = v;
+    for (int i = 0; i < kNumOutputValves; ++i) {
+        EEPROM.get(addr, _tasks[i]);
+        _tasks[i].valve = outputValves[i];
         addr += sizeof(Task);
     }
 }
@@ -121,8 +121,8 @@ void DutyCycleManagerClass::loadTasks() {
 void DutyCycleManagerClass::saveTasks() {
     int addr = kEETasks;
 
-    for (Valve v = 0; v < kNumValves; ++v) {
-        EEPROM.put(addr, _tasks[v]);
+    for (int i = 0; i < kNumOutputValves; ++i) {
+        EEPROM.put(addr, _tasks[i]);
         addr += sizeof(Task);
     }
 }

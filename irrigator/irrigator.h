@@ -13,15 +13,15 @@ public:
 public:
     IrrigatorClass();
 
-    void openValve(Valve valve);
-    void closeValve(Valve valve);
     void performTask(Task& task);
     void reset();
     
     const bool isBusy() const { return _openValvesMask != 0; }
 
 private:
-    void prepareValveForOpening(Valve valve);
+    void openValve(Valve valve);
+    void closeValve(Valve valve);
+    void ensureAllOutputValvesAreClosed();
     uint8_t pinForValve(Valve valve);
     void logOpenMask();
 
@@ -30,6 +30,7 @@ private:
     static const Milliseconds kValveCloseTransientTime = 500;
 
     uint8_t _openValvesMask;
+    uint8_t _outputValvesMask;
 };
 
 static IrrigatorClass Irrigator;

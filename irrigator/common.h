@@ -8,10 +8,21 @@ extern const uint16_t kFirmwareVersion;
 // NodeMCU pin mapping
 extern const uint8_t pinD[];
 
-static const int kNumValves = 6;
 extern const uint8_t pinDForValve[];
 
-typedef uint8_t Valve;
+typedef enum {
+    kValveOutput1 = 0,
+    kValveOutput2,
+    kValveOutput3,
+    kValveOutput4,
+
+    kNumOutputValves,
+
+    kValveMaster = kNumOutputValves,
+} Valve;
+
+static const Valve outputValves[] = {kValveOutput1, kValveOutput2, kValveOutput3, kValveOutput4};
+
 typedef uint16_t Milliseconds;
 typedef uint16_t Seconds;
 
@@ -39,7 +50,7 @@ EEPROM_CELL_TYPE(kEEFirmwareVersion, uint16_t)
 EEPROM_CELL_TYPE(kEELastDutyCycleCumulativeTimeSeconds, uint32_t)
 EEPROM_CELL_TYPE(kEELastDutyCycleUnixTimeSeconds, uint32_t)
 EEPROM_CELL_TYPE(kEEPreviousUptimeSeconds, uint32_t)
-EEPROM_CELL_SIZE(kEETasks, kNumValves * 20)
+EEPROM_CELL_SIZE(kEETasks, kNumOutputValves * 20)
 
 EEPROM_LAYOUT_END
 

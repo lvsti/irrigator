@@ -38,8 +38,8 @@ static String renderStatusPage() {
     page += F(" ago<br/>Next cycle due: in ");
     page += DutyCycleManager.timeIntervalTillNextCycle().toHumanReadableString();
     page += F("</p>");
-    for (Valve v = 0; v < kNumValves; ++v) {
-        page += renderTaskForm(DutyCycleManager.task(v));
+    for (int i = 0; i < kNumOutputValves; ++i) {
+        page += renderTaskForm(DutyCycleManager.task(i));
     }
     page += F("</body></html>");
     return page;
@@ -102,18 +102,25 @@ static void handleUpdateValve(const HTTPRequest& request, Stream& responseStream
 
     String vstr = request.uri().substring(7, request.uri().length() - 1);
     int v = vstr.toInt();
-    if (v == 0 || v > kNumValves) {
+    bool isInvalidValve = true;
+
+    for (int i = 0; i < kNumOutputValves; ++i) {
+        if (v == outputValves[i]) {
+            isInvalidValve = false;
+            break;
+        }
+    }
+
+    if (isInvalidValve) {
         LOG(String(F("bad request: ")) + request.method() + " " + request.uri() + "\n");
         responseStream.print(renderBadRequest());
         return;
     }
 
-    --v;
-
     // parse valve settings
     HTTPForm form(request.body());
     DutyCycleManagerClass::Task task;
-    task.valve = v;
+    task.valve = (Valve)v;
 
     for (int i = 0; i < form.fieldCount(); ++i) {
         if (form.field(i).name == F("description")) {

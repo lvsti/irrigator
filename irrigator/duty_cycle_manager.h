@@ -37,7 +37,7 @@ private:
     void saveTasks();
 
 private:
-    Task _tasks[kNumValves];
+    Task _tasks[kNumOutputValves];
     CumulativeTime _lastCycleCumulativeTime;
     UnixTime _lastCycleUnixTime;
 };
