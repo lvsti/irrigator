@@ -59,9 +59,9 @@ EEPROM_LAYOUT_END
 
 #if DEBUG
 #include <HardwareSerial.h>
-#define LOG Serial.print
+#define LOG(...) Serial.print(__VA_ARGS__)
 #else
-#define LOG
+#define LOG(...)
 #endif
 
 #endif // __common_h
