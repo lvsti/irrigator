@@ -38,6 +38,21 @@ static String renderStatusPage() {
     page += F(" ago<br/>Next cycle due: in ");
     page += DutyCycleManager.timeIntervalTillNextCycle().toHumanReadableString();
     page += F("</p>");
+
+    page += F("<p>");
+    page += F("<form method=\"post\" action=\"/reset/\">");
+    page += F("<input type=\"submit\" value=\"Reset\"/>");
+    page += F("</form><br/>");
+    page += F("<form method=\"post\" action=\"/reschedule/\">");
+    page += F("<input type=\"hidden\" name=\"delay\" value=\"0\"/>");
+    page += F("<input type=\"submit\" value=\"Run now\"/>");
+    page += F("</form><br/>");
+    page += F("<form method=\"post\" action=\"/reschedule/\">");
+    page += F("Schedule next cycle: <input type=\"text\" name=\"delay\" value=\"600\"/> seconds from now");
+    page += F("<input type=\"submit\" value=\"Schedule\"/>");
+    page += F("</form>");
+    page += F("</p>");
+
     for (int i = 0; i < kNumOutputValves; ++i) {
         page += renderTaskForm(DutyCycleManager.task(i));
     }
@@ -151,6 +166,36 @@ static void handleResetDutyCycle(const HTTPRequest& request, Stream& responseStr
     responseStream.print(renderRedirectToStatusPage());
 }
 
+static void handleRescheduleDutyCycle(const HTTPRequest& request, Stream& responseStream) {
+    if (!isAuthorized(request)) {
+        responseStream.print(renderUnauthorized());
+        return;
+    }
+
+    HTTPForm form(request.body());
+    int delay = 0;
+    for (int i = 0; i < form.fieldCount(); ++i) {
+        if (form.field(i).name == F("delay")) {
+            delay = form.field(i).value.toInt();
+            break;
+        }
+    }
+
+    if (delay == 0) {
+        DutyCycleManager.run();
+    }
+    else if (delay > 0) {
+        DutyCycleManager.schedule(TimeInterval::withSeconds(delay));
+    }
+    else {
+        LOG(String(F("bad request: ")) + request.method() + " " + request.uri() + "\n");
+        responseStream.print(renderBadRequest());
+        return;
+    }
+
+    responseStream.print(renderRedirectToStatusPage());
+}
+
 static void handleStatusQuery(const HTTPRequest& request, Stream& responseStream) {
     responseStream.print(renderStatusPage());
 }
@@ -162,6 +207,9 @@ void handleRequest(const HTTPRequest& request, Stream& responseStream) {
     }
     else if (request.method() == "POST" && request.uri() == "/reset/") {
         handleResetDutyCycle(request, responseStream);
+    }
+    else if (request.method() == "POST" && request.uri() == "/reschedule/") {
+        handleRescheduleDutyCycle(request, responseStream);
     }
     else if (request.method() == "GET" && request.uri() == "/") {
         handleStatusQuery(request, responseStream);
