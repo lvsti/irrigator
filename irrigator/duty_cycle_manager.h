@@ -31,6 +31,7 @@ public:
 
     void run();
     void reset();
+    void schedule(const TimeInterval& ti);
 
 private:
     void loadTasks();
@@ -40,6 +41,8 @@ private:
     Task _tasks[kNumOutputValves];
     CumulativeTime _lastCycleCumulativeTime;
     UnixTime _lastCycleUnixTime;
+    bool _isScheduled;
+    CumulativeTime _scheduledCumulativeTime;
 };
 
 extern DutyCycleManagerClass DutyCycleManager;

@@ -10,7 +10,9 @@ DutyCycleManagerClass DutyCycleManager;
 
 DutyCycleManagerClass::DutyCycleManagerClass():
     _lastCycleCumulativeTime(CumulativeTime::distantPast()),
-    _lastCycleUnixTime(UnixTime::distantPast()) {
+    _lastCycleUnixTime(UnixTime::distantPast()),
+    _isScheduled(false),
+    _scheduledCumulativeTime(CumulativeTime::distantPast()) {
 }
 
 void DutyCycleManagerClass::loadState() {
@@ -45,6 +47,10 @@ TimeInterval DutyCycleManagerClass::timeIntervalSinceLastCycle() const {
 
 TimeInterval DutyCycleManagerClass::timeIntervalTillNextCycle() const {
     DeviceTime localTime = Clock.deviceTime();
+    if (_isScheduled) {
+        return _scheduledCumulativeTime.timeIntervalSince(Clock.cumulativeTimeFromDeviceTime(localTime));
+    }
+
     if (Clock.isIsolated()) {
         CumulativeTime dueTime = _lastCycleCumulativeTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
         return dueTime.timeIntervalSince(Clock.cumulativeTimeFromDeviceTime(localTime));
@@ -89,6 +95,8 @@ void DutyCycleManagerClass::run() {
     }
 
     LOG(F("[DutyCycleManager] Duty cycle finished.\n"));
+
+    _isScheduled = false;
 }
 
 void DutyCycleManagerClass::reset() {
@@ -101,6 +109,14 @@ void DutyCycleManagerClass::reset() {
     _lastCycleUnixTime = Clock.unixTimeFromCumulativeTime(_lastCycleCumulativeTime);
     seconds = _lastCycleUnixTime.timeIntervalSinceReferenceTime().seconds();
     EEPROM.put(kEELastDutyCycleUnixTimeSeconds, _lastCycleUnixTime);
+
+    _isScheduled = false;
+}
+
+void DutyCycleManagerClass::schedule(const TimeInterval& ti) {
+    DeviceTime scheduledTime = Clock.deviceTime() + ti;
+    _scheduledCumulativeTime = Clock.cumulativeTimeFromDeviceTime(scheduledTime);
+    _isScheduled = true;
 }
 
 void DutyCycleManagerClass::updateTask(const Task& task) {
