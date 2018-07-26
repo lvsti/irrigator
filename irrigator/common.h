@@ -7,6 +7,7 @@ extern const uint16_t kFirmwareVersion;
 
 // NodeMCU pin mapping
 extern const uint8_t pinD[];
+extern const uint8_t pinA[];
 
 extern const uint8_t pinDForValve[];
 
