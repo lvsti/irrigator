@@ -130,6 +130,8 @@ void DutyCycleManagerClass::loadTasks() {
     for (int i = 0; i < kNumOutputValves; ++i) {
         EEPROM.get(addr, _tasks[i]);
         _tasks[i].valve = outputValves[i];
+        LOG(String("loaded task for valve ") + String(outputValves[i]) + ": " +
+            TimeInterval::withSeconds(_tasks[i].duration).toHumanReadableString() + "\n");
         addr += sizeof(Task);
     }
 }
@@ -138,6 +140,8 @@ void DutyCycleManagerClass::saveTasks() {
     int addr = kEETasks;
 
     for (int i = 0; i < kNumOutputValves; ++i) {
+        LOG(String("saving task for valve ") + String(outputValves[i]) + ": " + 
+            TimeInterval::withSeconds(_tasks[i].duration).toHumanReadableString());
         EEPROM.put(addr, _tasks[i]);
         addr += sizeof(Task);
     }

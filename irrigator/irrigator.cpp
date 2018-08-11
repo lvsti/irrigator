@@ -26,12 +26,13 @@ void IrrigatorClass::openValve(Valve valve) {
 
 void IrrigatorClass::closeValve(Valve valve) {
     digitalWrite(pinForValve(valve), LOW);
+    LOG(String(F("closing valve ")) + String(valve) + "\n");
     _openValvesMask &= ~(1 << valve);
     delay(kValveCloseTransientTime);
 }
 
 void IrrigatorClass::performTask(Task& task) {
-    LOG(String(F("starting task for valve ")) + String(task.valve) + ": " + String(task.duration) + "sec\n");
+    LOG(String(F("starting task for valve ")) + String(task.valve) + ": " + String(task.duration) + " sec\n");
     openValve(task.valve);
     openValve(kValveMaster);
 
@@ -72,5 +73,5 @@ uint8_t IrrigatorClass::pinForValve(Valve valve) {
 }
 
 void IrrigatorClass::logOpenMask() {
-    LOG(String(F("open valves: ")) + String(_openValvesMask, BIN));
+    LOG(String(F("open valves = ")) + String(_openValvesMask, BIN) + "\n");
 }
