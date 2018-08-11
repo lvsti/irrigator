@@ -22,13 +22,13 @@ void IrrigatorClass::openValve(Valve valve) {
     }
     
     _openValvesMask |= 1 << valve;
-    digitalWrite(pinForValve(valve), HIGH);
+    digitalWrite(pinForValve(valve), LOW);
     delay(kValveOpenTransientTime);
 }
 
 void IrrigatorClass::closeValve(Valve valve) {
-    digitalWrite(pinForValve(valve), LOW);
     LOG(String(F("closing valve ")) + String(valve) + "\n");
+    digitalWrite(pinForValve(valve), HIGH);
     _openValvesMask &= ~(1 << valve);
     delay(kValveCloseTransientTime);
 }
