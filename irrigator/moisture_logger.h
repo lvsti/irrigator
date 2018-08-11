@@ -1,11 +1,11 @@
-#ifndef __humidity_logger_h
-#define __humidity_logger_h
+#ifndef __moisture_logger_h
+#define __moisture_logger_h
 
 #include "time.h"
 
-class HumidityLoggerClass {
+class MoistureLoggerClass {
 public:
-    HumidityLoggerClass();
+    MoistureLoggerClass();
     int sample();
     bool submitToIOTPlotter(int value);
 
@@ -16,6 +16,6 @@ private:
     CumulativeTime _lastSampleCumulativeTime;
 };
 
-extern HumidityLoggerClass HumidityLogger;
+extern MoistureLoggerClass MoistureLogger;
 
-#endif // __humidity_logger_h
+#endif // __moisture_logger_h

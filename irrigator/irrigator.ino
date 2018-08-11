@@ -4,7 +4,7 @@
 #include "common.h"
 #include "duty_cycle_manager.h"
 #include "http_request.h"
-#include "humidity_logger.h"
+#include "moisture_logger.h"
 #include "webservice.h"
 
 static const TimeInterval kConnectionTimeout = TimeInterval::withSeconds(10);
@@ -101,9 +101,9 @@ void loop() {
         DutyCycleManager.run();
     }
 
-    int humidity = HumidityLogger.sample();
-    if (humidity > 0) {
-        HumidityLogger.submitToIOTPlotter(humidity);
+    int moisture = MoistureLogger.sample();
+    if (moisture > 0) {
+        MoistureLogger.submitToIOTPlotter(moisture);
     }
 
     EEPROM.commit();
