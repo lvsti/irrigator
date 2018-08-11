@@ -3,7 +3,7 @@
 #include <WString.h>
 #include "irrigator.h"
 
-IrrigatorClass::IrrigatorClass() : _openValvesMask(0) {
+IrrigatorClass::IrrigatorClass() : _openValvesMask(0), _outputValvesMask(0) {
     pinMode(pinForValve(kValveMaster), OUTPUT);
 
     for (int i = 0; i < kNumOutputValves; ++i) {
@@ -17,7 +17,9 @@ IrrigatorClass::IrrigatorClass() : _openValvesMask(0) {
 
 void IrrigatorClass::openValve(Valve valve) {
     LOG(String(F("opening valve ")) + String(valve) + "\n");
-    ensureAllOutputValvesAreClosed();
+    if (valve != kValveMaster) {
+        ensureAllOutputValvesAreClosed();
+    }
     
     _openValvesMask |= 1 << valve;
     digitalWrite(pinForValve(valve), HIGH);
