@@ -20,7 +20,8 @@ typedef enum {
     kNumOutputValves,
 
     kValveMaster = kNumOutputValves,
-} Valve;
+};
+typedef uint8_t Valve;
 
 static const Valve outputValves[] = {kValveOutput1, kValveOutput2, kValveOutput3, kValveOutput4};
 
