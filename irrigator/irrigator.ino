@@ -104,6 +104,7 @@ void loop() {
     int moisture = MoistureLogger.sample();
     if (moisture > 0) {
         MoistureLogger.submitToIOTPlotter(moisture);
+        MoistureLogger.submitToThingspeak(moisture);
     }
 
     EEPROM.commit();

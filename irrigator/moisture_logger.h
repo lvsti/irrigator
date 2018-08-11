@@ -8,6 +8,7 @@ public:
     MoistureLoggerClass();
     int sample();
     bool submitToIOTPlotter(int value);
+    bool submitToThingspeak(int value);
 
 private:
     int _minValue;

@@ -7,6 +7,8 @@
 
 static const char kIOTPlotterAPIKey[] = "*";
 static const char kIOTPlotterFeedID[] = "*";
+static const char kThingspeakAPIKey[] = "*";
+static const char kThingspeakChannelID[] = "*";
 static const uint32_t kSampleIntervalSeconds = 60 * 15;
 
 MoistureLoggerClass MoistureLogger;
@@ -85,6 +87,66 @@ bool MoistureLoggerClass::submitToIOTPlotter(int value) {
 
     client.write(header.c_str(), header.length());
     client.write(payload.c_str(), payload.length());
+    client.flush();
+
+    interval = 10;
+    while (!client.available() && interval < 1000) {
+        delay(interval);
+        interval *= 2;
+    }
+
+    if (!client.available()) {
+        LOG(F("[MoistureLogger] error: connection reset\n"));
+        return false;
+    }
+
+    HTTPResponse response(client);
+    if (response.statusCode() != 200) {
+        LOG(String(F("[MoistureLogger] error: server returned ")) + String(response.statusCode()) + F("\n"));
+        return false;
+    }
+
+    client.stop();
+
+    return true;
+}
+
+bool MoistureLoggerClass::submitToThingspeak(int value) {
+    if (WiFi.status() != WL_CONNECTED) {
+        LOG(F("failed: not connected\n"));
+        return false;
+    }
+
+    IPAddress logServerIP;
+    if (!WiFi.hostByName("api.thingspeak.com", logServerIP)) {
+        LOG(F("[MoistureLogger] error: cannot resolve log server host\n"));
+        return false;
+    }
+
+    WiFiClient client;
+    client.connect(logServerIP, 80);
+    int interval = 10;
+    while (!client.connected() && interval < 1000) {
+        delay(interval);
+        interval *= 2;
+    }
+
+    if (!client.connected()) {
+        LOG(F("[MoistureLogger] error: cannot connect to log server\n"));
+        return false;
+    }
+
+    String request(F("GET https://api.thingspeak.com/update?api_key="));
+    request += kThingspeakAPIKey;
+    request += F("&channel_id=");
+    request += kThingspeakChannelID;
+    request += F("&field1=");
+    request += String(value);
+    request += F(" HTTP/1.1\r\n");
+    request += F("Host: api.thingspeak.com\r\n");
+    request += F("Connection: keep-alive\r\n\r\n");
+  
+    client.print(request);
     client.flush();
 
     interval = 10;
