@@ -116,7 +116,7 @@ static void handleUpdateValve(const HTTPRequest& request, Stream& responseStream
     }
 
     String vstr = request.uri().substring(7, request.uri().length() - 1);
-    int v = vstr.toInt();
+    int v = vstr.toInt() - 1;
     bool isInvalidValve = true;
 
     for (int i = 0; i < kNumOutputValves; ++i) {
