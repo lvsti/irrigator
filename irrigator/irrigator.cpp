@@ -75,5 +75,5 @@ uint8_t IrrigatorClass::pinForValve(Valve valve) {
 }
 
 void IrrigatorClass::logOpenMask() {
-    LOG(String(F("open valves = ")) + String(_openValvesMask, BIN) + "\n");
+    LOG(String(F("open valves mask = ")) + String(_openValvesMask, BIN) + "\n");
 }
