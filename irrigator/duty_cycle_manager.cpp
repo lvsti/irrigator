@@ -4,7 +4,11 @@
 #include "clock.h"
 #include "irrigator.h"
 
+#if DEBUG
+static const uint32_t kDutyCycleIntervalSeconds = 60 * 1;
+#else
 static const uint32_t kDutyCycleIntervalSeconds = 60 * 60 * 24;
+#endif
 
 DutyCycleManagerClass DutyCycleManager;
 

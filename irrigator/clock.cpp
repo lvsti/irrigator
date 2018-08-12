@@ -5,9 +5,15 @@
 #include <WiFiUdp.h>
 #include "common.h"
 
+#if DEBUG
+static const int kSyncRetryIntervalSeconds = 10;
+static const int kSyncIntervalSeconds = 60;
+static const int kUptimeSaveIntervalSeconds = 30;
+#else
 static const int kSyncRetryIntervalSeconds = 60;
 static const int kSyncIntervalSeconds = 60 * 60 * 24;
 static const int kUptimeSaveIntervalSeconds = 60 * 60;
+#endif
 
 static const char* kNTPServerName = "hu.pool.ntp.org";
 

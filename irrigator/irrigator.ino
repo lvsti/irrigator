@@ -107,6 +107,8 @@ void loop() {
         MoistureLogger.submitToThingspeak(moisture);
     }
 
-    EEPROM.commit();
+    if (!EEPROM.commit()) {
+        LOG(F("[main] EEPROM commit failed\n"));
+    }
     delay(1000);
 }
