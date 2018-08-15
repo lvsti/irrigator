@@ -8,30 +8,33 @@ template <typename T> class Time;
 
 class TimeInterval {
 public:
-    static const int kFractionResolution = 16;
+    static const int kNumFractionBits = 16;
+    static const uint64_t kFractionMask = (uint64_t(1) << kNumFractionBits) - 1;
+    static const uint64_t kSignMask = uint64_t(1) << 63;
 public:
     static TimeInterval withSeconds(int32_t sec) {
-        return TimeInterval(sec << kFractionResolution);
+        return TimeInterval(int64_t(sec) << kNumFractionBits);
     }
 
     static TimeInterval withMilliseconds(int32_t msec) {
-        return TimeInterval((msec << kFractionResolution) / 1000);
+        return TimeInterval((int64_t(msec) << kNumFractionBits) / 1000);
     }
 
     static TimeInterval neverInThePast() {
-        return TimeInterval(~0);
+        return TimeInterval(~uint64_t(0));
     }
 
     static TimeInterval neverInTheFuture() {
-        return TimeInterval(~0 ^ (1 << 63));
+        return TimeInterval(~uint64_t(0) | kSignMask);
     }
 
     int32_t seconds() const {
-        return ((int32_t)_raw.components.sign << 31) | (int32_t)_raw.components.seconds;
+        return _ticks >> kNumFractionBits;
     }
 
     int16_t fractionInMilliseconds() const {
-        return ((int16_t)_raw.components.sign << 15) | ((int32_t)_raw.components.fraction * 1000) >> kFractionResolution;
+        int64_t signedFraction = _ticks & (kFractionMask | kSignMask);
+        return (signedFraction * 1000) >> (kNumFractionBits - 1);
     }
 
     TimeInterval operator+(const TimeInterval& other) const {
@@ -41,7 +44,7 @@ public:
     }
 
     TimeInterval& operator+=(const TimeInterval& ti) {
-        _raw.ticks += ti._raw.ticks;
+        _ticks += ti._ticks;
         return *this;
     }
 
@@ -52,53 +55,41 @@ public:
     }
 
     TimeInterval& operator-=(const TimeInterval& ti) {
-        _raw.ticks -= ti._raw.ticks;
+        _ticks -= ti._ticks;
         return *this;
     }
 
     bool operator==(const TimeInterval& other) const {
-        return _raw.ticks == other._raw.ticks;
+        return _ticks == other._ticks;
     }
 
     bool operator!=(const TimeInterval& other) const {
-        return _raw.ticks != other._raw.ticks;
+        return _ticks != other._ticks;
     }
 
     bool operator<(const TimeInterval& other) const {
-        return _raw.ticks < other._raw.ticks;
+        return _ticks < other._ticks;
     }
 
     bool operator<=(const TimeInterval& other) const {
-        return _raw.ticks <= other._raw.ticks;
+        return _ticks <= other._ticks;
     }
 
     bool operator>(const TimeInterval& other) const {
-        return _raw.ticks > other._raw.ticks;
+        return _ticks > other._ticks;
     }
 
     bool operator>=(const TimeInterval& other) const {
-        return _raw.ticks >= other._raw.ticks;
+        return _ticks >= other._ticks;
     }
 
     String toHumanReadableString() const;
 
 private:
-    TimeInterval(uint64_t ticks) {
-        _raw.ticks = ticks;
-    } 
+    TimeInterval(uint64_t ticks): _ticks(ticks) {} 
     
-private:
-#pragma pack(push, 1)
-    union {
-        int64_t ticks;
-        struct {
-            unsigned fraction:kFractionResolution;
-            unsigned seconds:31;
-            unsigned :(32 - kFractionResolution);
-            unsigned sign:1;
-        } components;
-    } _raw;
-#pragma pack(pop)
+public:
+    int64_t _ticks;
 
     template <typename T> friend class Time;
 };
@@ -107,8 +98,8 @@ private:
 template <typename T>
 class Time {
 public:
-    static T distantPast() { return Time(TimeInterval::neverInThePast()._raw.ticks); }
-    static T distantFuture() { return Time(TimeInterval::neverInTheFuture()._raw.ticks); }
+    static T distantPast() { return Time(TimeInterval::neverInThePast()._ticks); }
+    static T distantFuture() { return Time(TimeInterval::neverInTheFuture()._ticks); }
 
     uint32_t seconds() const { return _interval.seconds(); }
     uint16_t fractionInMilliseconds() const { return _interval.fractionInMilliseconds(); }
@@ -177,7 +168,7 @@ private:
 class UnixTime: public Time<UnixTime> {
 public:
     explicit UnixTime(uint32_t timestamp):
-        Time((uint64_t)timestamp << TimeInterval::kFractionResolution) {
+        Time(uint64_t(timestamp) << TimeInterval::kNumFractionBits) {
     }
 
     UnixTime(const Time<UnixTime>& base): Time(base) {}
@@ -187,7 +178,7 @@ public:
 class DeviceTime: public Time<DeviceTime> {
 public:
     explicit DeviceTime(unsigned long msec, uint16_t overflow = 0):
-        Time((((((uint64_t)overflow) << 32) | msec) << TimeInterval::kFractionResolution) / 1000) {
+        Time((((uint64_t(overflow) << 32) | msec) << TimeInterval::kNumFractionBits) / 1000) {
     }
 
     DeviceTime(const Time<DeviceTime>& base): Time(base) {}
@@ -200,8 +191,7 @@ public:
                             const TimeInterval& previousUptime = TimeInterval::withSeconds(0)):
         Time(({
             TimeInterval interval = localTime.timeIntervalSinceReferenceTime() + previousUptime;
-            (uint64_t)((interval.seconds() << TimeInterval::kFractionResolution) | 
-                       ((interval.fractionInMilliseconds() << TimeInterval::kFractionResolution) / 1000));
+            (uint64_t)interval._ticks;
         })) {
     }
 

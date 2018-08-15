@@ -5,8 +5,8 @@ String TimeInterval::toHumanReadableString() const {
         return "never";
     }
 
-    int s = seconds();
-    int hours = abs(s / 3600);
+    int32_t s = seconds();
+    int32_t hours = abs(s / 3600);
     int minutes = abs((s % 3600) / 60);
     int secs = abs(s % 60);
     String space1 = hours > 0 && minutes > 0 ? " " : "";
