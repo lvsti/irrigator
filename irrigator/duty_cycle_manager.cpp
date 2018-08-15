@@ -5,9 +5,9 @@
 #include "irrigator.h"
 
 #if DEBUG
-static const uint32_t kDutyCycleIntervalSeconds = 60 * 1;
+static const TimeInterval kDutyCycleInterval = TimeInterval::withSeconds(60);
 #else
-static const uint32_t kDutyCycleIntervalSeconds = 60 * 60 * 24;
+static const TimeInterval kDutyCycleInterval = TimeInterval::withSeconds(60 * 60 * 24);
 #endif
 
 DutyCycleManagerClass DutyCycleManager;
@@ -56,7 +56,7 @@ TimeInterval DutyCycleManagerClass::timeIntervalTillNextCycle() const {
     }
 
     if (Clock.isIsolated()) {
-        CumulativeTime dueTime = _lastCycleCumulativeTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+        CumulativeTime dueTime = _lastCycleCumulativeTime + kDutyCycleInterval;
         return dueTime.timeIntervalSince(Clock.cumulativeTimeFromDeviceTime(localTime));
     }
 
@@ -65,7 +65,7 @@ TimeInterval DutyCycleManagerClass::timeIntervalTillNextCycle() const {
         lastCycleUnixTime = Clock.unixTimeFromCumulativeTime(_lastCycleCumulativeTime);
     }
 
-    UnixTime dueTime = lastCycleUnixTime + TimeInterval::withSeconds(kDutyCycleIntervalSeconds);
+    UnixTime dueTime = lastCycleUnixTime + kDutyCycleInterval;
     return dueTime.timeIntervalSince(Clock.unixTimeFromDeviceTime(localTime));
 }
 

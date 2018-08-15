@@ -9,7 +9,7 @@ static const char kIOTPlotterAPIKey[] = "*";
 static const char kIOTPlotterFeedID[] = "*";
 static const char kThingspeakAPIKey[] = "*";
 static const char kThingspeakChannelID[] = "*";
-static const uint32_t kSampleIntervalSeconds = 60 * 15;
+static const TimeInterval kSampleInterval = TimeInterval::withSeconds(60 * 15);
 
 MoistureLoggerClass MoistureLogger;
 
@@ -20,7 +20,7 @@ MoistureLoggerClass::MoistureLoggerClass():
 
 int MoistureLoggerClass::sample() {
     DeviceTime localTime = Clock.deviceTime();
-    CumulativeTime dueTime = _lastSampleCumulativeTime + TimeInterval::withSeconds(kSampleIntervalSeconds);
+    CumulativeTime dueTime = _lastSampleCumulativeTime + kSampleInterval;
     int32_t seconds = dueTime.timeIntervalSince(Clock.cumulativeTimeFromDeviceTime(localTime)).seconds();
 
     if (seconds > 0) {

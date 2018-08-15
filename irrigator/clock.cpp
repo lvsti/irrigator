@@ -6,13 +6,13 @@
 #include "common.h"
 
 #if DEBUG
-static const int kSyncRetryIntervalSeconds = 10;
-static const int kSyncIntervalSeconds = 60;
-static const int kUptimeSaveIntervalSeconds = 30;
+static const TimeInterval kSyncRetryInterval = TimeInterval::withSeconds(10);
+static const TimeInterval kSyncInterval = TimeInterval::withSeconds(60);
+static const TimeInterval kUptimeSaveInterval = TimeInterval::withSeconds(30);
 #else
-static const int kSyncRetryIntervalSeconds = 60;
-static const int kSyncIntervalSeconds = 60 * 60 * 24;
-static const int kUptimeSaveIntervalSeconds = 60 * 60;
+static const TimeInterval kSyncRetryInterval = TimeInterval::withSeconds(60);
+static const TimeInterval kSyncInterval = TimeInterval::withSeconds(60 * 60 * 24);
+static const TimeInterval kUptimeSaveInterval = TimeInterval::withSeconds(60 * 60);
 #endif
 
 static const char* kNTPServerName = "hu.pool.ntp.org";
@@ -72,18 +72,18 @@ bool ClockClass::sync() {
         " (" + String(ct.timeIntervalSinceReferenceTime().seconds()) + ")\n");
 
     if (_lastUptimeSaveTime == DeviceTime::distantPast() ||
-        localTime.timeIntervalSince(_lastUptimeSaveTime) > TimeInterval::withSeconds(kUptimeSaveIntervalSeconds)) {
+        localTime.timeIntervalSince(_lastUptimeSaveTime) > kUptimeSaveInterval) {
         saveUptime();
     }
 
     if (isIsolated() && 
         (_lastSyncTrialTime != DeviceTime::distantPast() && 
-         localTime.timeIntervalSince(_lastSyncTrialTime) < TimeInterval::withSeconds(kSyncRetryIntervalSeconds))) {
+         localTime.timeIntervalSince(_lastSyncTrialTime) < kSyncRetryInterval)) {
         LOG(F("[Clock] Not syncing (isolated): timeout hasn't passed since last failed trial\n"));
         return false;
     }
 
-    if (!isIsolated() && localTime.timeIntervalSince(_lastSuccessfulSyncTime) < TimeInterval::withSeconds(kSyncIntervalSeconds)) {
+    if (!isIsolated() && localTime.timeIntervalSince(_lastSuccessfulSyncTime) < kSyncInterval) {
         LOG(F("[Clock] Not syncing (already synced): timeout hasn't passed since last successful sync\n"));
         return true;
     }
@@ -149,7 +149,7 @@ bool ClockClass::sync() {
 
     _lastSuccessfulSyncTime = syncTime;
     
-    LOG(F("done\n"));
+    LOG(String(currentTimestamp) + "\n");
 
     return true;
 }
