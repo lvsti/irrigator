@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <EEPROM.h>
+#include <Ticker.h>
 #include "clock.h"
 #include "common.h"
 #include "duty_cycle_manager.h"
@@ -8,7 +9,15 @@
 #include "webservice.h"
 
 static const TimeInterval kConnectionTimeout = TimeInterval::withSeconds(10);
+static const TimeInterval kWatchdogTimerInterval = TimeInterval::withSeconds(30);
 
+Ticker watchdog;
+
+void watchdogHandler() {
+    LOG(F("[main] watchdog alert: loop is stuck, resetting board.\n"));
+    void (*resetBoard)(void) = 0;
+    resetBoard();
+}
 
 bool ensureWifiConnection() {
     if (WiFi.status() == WL_CONNECTED) {
@@ -84,9 +93,13 @@ void setup() {
     ensureWifiConnection();
 
     server.begin();
+
+    watchdog.once(kWatchdogTimerInterval.seconds(), watchdogHandler);
 }
 
 void loop() {
+    unsigned long startTime = millis();
+    LOG(F("loop starts\n"));
     ensureWifiConnection();
 
     // Check if a client has connected
@@ -98,7 +111,9 @@ void loop() {
     Clock.sync();
 
     if (DutyCycleManager.isDue()) {
+        watchdog.detach();
         DutyCycleManager.run();
+        watchdog.once(kWatchdogTimerInterval.seconds(), watchdogHandler);
     }
 
     int moisture = MoistureLogger.sample();
@@ -110,5 +125,10 @@ void loop() {
     if (!EEPROM.commit()) {
         LOG(F("[main] EEPROM commit failed\n"));
     }
-    delay(1000);
+
+    watchdog.once(kWatchdogTimerInterval.seconds(), watchdogHandler);
+
+    unsigned long endTime = millis();
+    LOG(String(F("loop ends (")) + String(endTime - startTime) + "ms)\n");
+    delay(200);
 }
