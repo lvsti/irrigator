@@ -3,9 +3,9 @@
 #include <Ticker.h>
 #include "clock.h"
 #include "common.h"
+#include "ddns.h"
 #include "duty_cycle_manager.h"
 #include "http_request.h"
-#include "ipify.h"
 #include "moisture_logger.h"
 #include "webservice.h"
 
@@ -106,10 +106,7 @@ void loop() {
 
     ensureWifiConnection();
 
-    String externalIP;
-    if (IPify.getExternalIPAddress(externalIP)) {
-        LOG(F("[main] external IP address updated."));
-    }
+    DDNS.updateDDNS();
 
     // Check if a client has connected
     WiFiClient client = server.available();
