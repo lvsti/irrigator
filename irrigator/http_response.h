@@ -5,12 +5,14 @@ class Stream;
 
 class HTTPResponse {
 public:
-    HTTPResponse(Stream& stream);
+    HTTPResponse(Stream& stream, bool shouldParseBody = false);
 
     const int statusCode() const { return _statusCode; }
+    String body() const { return _body; }
 
 private:
     int _statusCode;
+    String _body;
 };
 
 
