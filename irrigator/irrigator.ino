@@ -63,8 +63,10 @@ void serve(WiFiClient& client) {
 }
 
 void setup() {
+    #if DEBUG
     Serial.begin(115200);
     delay(10);
+    #endif
 
     LOG(String(F("[main] EEPROM size: ")) + String(kEESize) + "\n");
 
