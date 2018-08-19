@@ -5,6 +5,7 @@
 #include "common.h"
 #include "duty_cycle_manager.h"
 #include "http_request.h"
+#include "ipify.h"
 #include "moisture_logger.h"
 #include "webservice.h"
 
@@ -42,6 +43,8 @@ bool ensureWifiConnection() {
     }
 
     LOG(F("\nWiFi connected\n"));
+
+    return true;
 }
 
 
@@ -100,7 +103,13 @@ void setup() {
 void loop() {
     unsigned long startTime = millis();
     LOG(F("loop starts\n"));
+
     ensureWifiConnection();
+
+    String externalIP;
+    if (IPify.getExternalIPAddress(externalIP)) {
+        LOG(F("[main] external IP address updated."));
+    }
 
     // Check if a client has connected
     WiFiClient client = server.available();
