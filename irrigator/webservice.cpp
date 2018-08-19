@@ -181,10 +181,7 @@ static void handleRescheduleDutyCycle(const HTTPRequest& request, Stream& respon
         }
     }
 
-    if (delay == 0) {
-        DutyCycleManager.run();
-    }
-    else if (delay > 0) {
+    if (delay >= 0) {
         DutyCycleManager.schedule(TimeInterval::withSeconds(delay));
     }
     else {
