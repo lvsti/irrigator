@@ -32,22 +32,23 @@ String bisect(const String& src, const String& separator, String& tail) {
     return head;
 }
 
+static const String kBase64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
 bool base64Decode(const String& src, String& dst) {
     if (src.length() % 4 != 0) {
         return false;
     }
 
-    static const String alphabet = F("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=");
     char buf[src.length()*3 / 4 + 1];
 
     int j = 0;
     int b[4];
 
     for (int i = 0; i < src.length(); i += 4) {
-        b[0] = alphabet.indexOf(src[i]);
-        b[1] = alphabet.indexOf(src[i + 1]);
-        b[2] = alphabet.indexOf(src[i + 2]);
-        b[3] = alphabet.indexOf(src[i + 3]);
+        b[0] = kBase64Alphabet.indexOf(src[i]);
+        b[1] = kBase64Alphabet.indexOf(src[i + 1]);
+        b[2] = kBase64Alphabet.indexOf(src[i + 2]);
+        b[3] = kBase64Alphabet.indexOf(src[i + 3]);
         buf[j++] = (char) ((b[0] << 2) | (b[1] >> 4));
         if (b[2] < 64) {
             buf[j++] = (char) ((b[1] << 4) | (b[2] >> 2));
@@ -61,3 +62,45 @@ bool base64Decode(const String& src, String& dst) {
 
     return true;
 }
+
+bool base64Encode(const String& src, String& dst) {
+    char buf[src.length()*4 / 3 + 1];
+
+    unsigned int carry = 0;
+    int numExtraBits = 0;
+    int j = 0;
+
+    for (int i = 0; i < src.length(); ++i) {
+        carry |= src[i];
+        numExtraBits += 2;
+
+        buf[j++] = kBase64Alphabet[carry >> numExtraBits];
+        carry &= (1 << numExtraBits) - 1;
+
+        if (numExtraBits == 6) {
+            buf[j++] = kBase64Alphabet[carry];
+            carry = 0;
+            numExtraBits = 0;
+        }
+
+        carry <<= 8;
+    }
+
+    if (numExtraBits > 0) {
+        buf[j++] = kBase64Alphabet[carry >> (8 + numExtraBits - 6)];
+    }
+
+    if (src.length() % 3 != 0) {
+        buf[j++] = '=';
+    }
+
+    if (src.length() % 3 == 1) {
+        buf[j++] = '=';
+    }
+
+    buf[j] = 0;
+    dst = buf;
+
+    return true;
+}
+
