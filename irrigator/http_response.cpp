@@ -5,8 +5,6 @@
 
 HTTPResponse::HTTPResponse(Stream& stream, bool shouldParseBody) {
     String statusLine = stream.readStringUntil('\r');
-    // skip the \n
-    stream.read();
     
     String tail;
     String head = bisect(statusLine, " ", tail);
@@ -15,13 +13,7 @@ HTTPResponse::HTTPResponse(Stream& stream, bool shouldParseBody) {
     if (!shouldParseBody) {
         return;
     }
-    
-    String line;
-    do {
-        line = stream.readStringUntil('\r');
-        stream.read();
-    }
-    while (line.length() > 0);
 
+    stream.find("\n\r\n");
     _body = stream.readString();
 }
