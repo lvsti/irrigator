@@ -45,7 +45,7 @@ bool ensureWifiConnection() {
 }
 
 
-WiFiServer server(80);
+WiFiServer server(8000);
 
 
 void serve(WiFiClient& client) {
