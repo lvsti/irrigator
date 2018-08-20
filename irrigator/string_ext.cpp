@@ -104,3 +104,28 @@ bool base64Encode(const String& src, String& dst) {
     return true;
 }
 
+static const char kHexDigits[] = "0123456789ABCDEF";
+
+bool formURLEncode(const String& src, String& dst) {
+    String str(src);
+    str.replace("%", "%%");
+
+    for (int i = 0; i < str.length(); ++i) {
+        int ch = str[i];
+        if (!(ch == '%' ||
+              ch >= 'A' && ch <= 'Z' || 
+              ch >= 'a' && ch <= 'z' || 
+              ch >= '0' && ch <= '9' || 
+              ch == '-' || ch == '_' || ch == '.' || ch == '~')) {
+            char encoded[4] = { '%', 0, 0, 0 };
+            encoded[1] = kHexDigits[(ch >> 4) & 0xf];
+            encoded[2] = kHexDigits[ch & 0xf];
+            str.replace(String((char)ch), encoded);
+        }
+    }
+
+    dst = str;
+
+    return true;
+}
+
