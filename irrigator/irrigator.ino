@@ -7,6 +7,7 @@
 #include "duty_cycle_manager.h"
 #include "http_request.h"
 #include "moisture_logger.h"
+#include "thingtweet.h"
 #include "webservice.h"
 
 static const TimeInterval kConnectionTimeout = TimeInterval::withSeconds(10);
@@ -16,6 +17,8 @@ Ticker watchdog;
 
 void watchdogHandler() {
     LOG(F("[main] watchdog alert: loop is stuck, resetting board.\n"));
+    tweetStatus("[main] watchdog alert: loop is stuck, resetting board");
+
     void (*resetBoard)(void) = 0;
     resetBoard();
 }
@@ -120,7 +123,11 @@ void loop() {
 
     if (DutyCycleManager.isDue()) {
         watchdog.detach();
+        tweetStatus("[main] starting cycle");
+
         DutyCycleManager.run();
+
+        tweetStatus("[main] cycle is over");
         watchdog.once(kWatchdogTimerInterval.seconds(), watchdogHandler);
     }
 
