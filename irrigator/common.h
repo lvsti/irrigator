@@ -53,6 +53,7 @@ EEPROM_CELL_TYPE(kEELastDutyCycleCumulativeTimeSeconds, uint32_t)
 EEPROM_CELL_TYPE(kEELastDutyCycleUnixTimeSeconds, uint32_t)
 EEPROM_CELL_TYPE(kEEPreviousUptimeSeconds, uint32_t)
 EEPROM_CELL_SIZE(kEETasks, kNumOutputValves * 20)
+EEPROM_CELL_TYPE(kEEDutyCycleIntervalSeconds, uint32_t)
 
 EEPROM_LAYOUT_END
 

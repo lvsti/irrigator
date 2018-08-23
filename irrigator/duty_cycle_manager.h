@@ -28,10 +28,12 @@ public:
     bool isDue() const;
     TimeInterval timeIntervalSinceLastCycle() const;
     TimeInterval timeIntervalTillNextCycle() const;
+    TimeInterval cycleInterval() const { return _cycleInterval; }
 
     void run();
     void reset();
     void schedule(const TimeInterval& ti);
+    void setCycleInterval(const TimeInterval& ti);
 
 private:
     void loadTasks();
@@ -43,6 +45,7 @@ private:
     UnixTime _lastCycleUnixTime;
     bool _isScheduled;
     CumulativeTime _scheduledCumulativeTime;
+    TimeInterval _cycleInterval;
 };
 
 extern DutyCycleManagerClass DutyCycleManager;
