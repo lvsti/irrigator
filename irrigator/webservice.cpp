@@ -51,6 +51,13 @@ static String renderStatusPage() {
     page += F("Schedule next cycle: <input type=\"text\" name=\"delay\" value=\"600\"/> seconds from now");
     page += F("<input type=\"submit\" value=\"Schedule\"/>");
     page += F("</form>");
+    page += F("<p>");
+    page += F("<form method=\"post\" action=\"/set_interval/\">");
+    page += String(F("Cycle interval: <input type=\"text\" name=\"hours\" value=\"")) + 
+        String(DutyCycleManager.cycleInterval().seconds() / 3600) + 
+        F("\"/> hours");
+    page += F("<input type=\"submit\" value=\"Set interval\"/>");
+    page += F("</form><br/>");
     page += F("</p>");
 
     for (int i = 0; i < kNumOutputValves; ++i) {
@@ -193,6 +200,33 @@ static void handleRescheduleDutyCycle(const HTTPRequest& request, Stream& respon
     responseStream.print(renderRedirectToStatusPage());
 }
 
+static void handleSetCycleInterval(const HTTPRequest& request, Stream& responseStream) {
+    if (!isAuthorized(request)) {
+        responseStream.print(renderUnauthorized());
+        return;
+    }
+
+    HTTPForm form(request.body());
+    int hours = 0;
+    for (int i = 0; i < form.fieldCount(); ++i) {
+        if (form.field(i).name == F("hours")) {
+            hours = form.field(i).value.toInt();
+            break;
+        }
+    }
+
+    if (hours >= 0) {
+        DutyCycleManager.setCycleInterval(TimeInterval::withSeconds(60 * 60 * hours));
+    }
+    else {
+        LOG(String(F("bad request: ")) + request.method() + " " + request.uri() + "\n");
+        responseStream.print(renderBadRequest());
+        return;
+    }
+
+    responseStream.print(renderRedirectToStatusPage());
+}
+
 static void handleStatusQuery(const HTTPRequest& request, Stream& responseStream) {
     responseStream.print(renderStatusPage());
 }
@@ -207,6 +241,9 @@ void handleRequest(const HTTPRequest& request, Stream& responseStream) {
     }
     else if (request.method() == "POST" && request.uri() == "/reschedule/") {
         handleRescheduleDutyCycle(request, responseStream);
+    }
+    else if (request.method() == "POST" && request.uri() == "/set_interval/") {
+        handleSetCycleInterval(request, responseStream);
     }
     else if (request.method() == "GET" && request.uri() == "/") {
         handleStatusQuery(request, responseStream);
